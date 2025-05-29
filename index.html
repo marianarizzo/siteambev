@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Interativo Ambev</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { height: 100vh; width: 100vw; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+  const urlCSV = "https://raw.githubusercontent.com/marianarizzo/siteambev/main/STOCK_PRODUCT-20250516-0810039-20250516-172629168.csv";
+
+  fetch(urlCSV)
+    .then(res => res.text())
+    .then(csv => {
+      const lines = csv.trim().split('\n');
+      const headers = lines[0].split(',');
+
+      const latIdx = headers.findIndex(h => h.toLowerCase().includes("latitude"));
+      const lonIdx = headers.findIndex(h => h.toLowerCase().includes("longitude"));
+      const nomeIdx = headers.findIndex(h => h.toLowerCase().includes("nome"));
+
+      const map = L.map('map').setView([-15.78, -47.93], 4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+
+        const lat = parseFloat(cols[latIdx]);
+        const lon = parseFloat(cols[lonIdx]);
+        const nome = cols[nomeIdx] || `Ponto ${i}`;
+
+        if (!isNaN(lat) && !isNaN(lon)) {
+          L.marker([lat, lon]).addTo(map).bindPopup(nome);
+        }
+      }
+    })
+    .catch(err => {
+      console.error("Erro ao carregar CSV:", err);
+      alert("Erro ao carregar o arquivo de dados.");
+    });
+</script>
+
+</body>
+</html>
