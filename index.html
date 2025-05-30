@@ -55,13 +55,30 @@
   </style>
 </head>
 <body>
-<div class="filtros">
-  <select id="filtroCDD" multiple></select>
-  <select id="filtroGN" multiple></select>
-  <select id="filtroInplant" multiple></select>
-  <select id="filtroRede" multiple></select>
-  <select id="filtroDia" multiple></select>
-  <div class="heat-toggle" id="heatToggle">Alternar Heatmap</div>
+<div class="filters">
+  <label>CDD:</label>
+  <select id="cddFilter" multiple></select><br>
+
+  <label>GN:</label>
+  <select id="gnFilter" multiple></select><br>
+
+  <label>Inplant:</label>
+  <select id="inplantFilter" multiple></select><br>
+
+  <label>Rede:</label>
+  <select id="redeFilter" multiple></select><br>
+
+  <label>Dia de Rota:</label>
+  <select id="camadaFilter">
+    <option value="Total">Total</option>
+    <option value="Agenda">Agenda</option>
+    <option value="Segunda">Segunda</option>
+    <option value="Terça">Terça</option>
+    <option value="Quarta">Quarta</option>
+    <option value="Quinta">Quinta</option>
+    <option value="Sexta">Sexta</option>
+    <option value="Sábado">Sábado</option>
+  </select>
 </div>
 <div id="map"></div>
 <div id="legenda">
