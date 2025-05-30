@@ -40,58 +40,53 @@
       cursor: pointer;
     }
 
-    #legenda {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      padding: 6px 14px;
-      font-size: 13px;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      white-space: nowrap;
-    }
-  </style>
+        #legenda {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            box-shadow: 0 0 4px rgba(0,0,0,0.1);
+        }
+
+        #botaoHeatmap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+    </style>
 </head>
 <body>
-<div class="filters">
-  <label>CDD:</label>
-  <select id="cddFilter" multiple></select><br>
-
-  <label>GN:</label>
-  <select id="gnFilter" multiple></select><br>
-
-  <label>Inplant:</label>
-  <select id="inplantFilter" multiple></select><br>
-
-  <label>Rede:</label>
-  <select id="redeFilter" multiple></select><br>
-
-  <label>Dia de Rota:</label>
-  <select id="camadaFilter">
-    <option value="Total">Total</option>
-    <option value="Agenda">Agenda</option>
-    <option value="Segunda">Segunda</option>
-    <option value="Terça">Terça</option>
-    <option value="Quarta">Quarta</option>
-    <option value="Quinta">Quinta</option>
-    <option value="Sexta">Sexta</option>
-    <option value="Sábado">Sábado</option>
-  </select>
-</div>
-<div id="map"></div>
-<div id="legenda">
-  <b>Legenda:</b>
-  <span style="color:green">● Agenda</span> |
-  <span style="color:red">● Segunda</span> |
-  <span style="color:orange">● Terça</span> |
-  <span style="color:gold">● Quarta</span> |
-  <span style="color:purple">● Quinta</span> |
-  <span style="color:black">● Sexta</span> |
-  <span style="color:gray">● Sábado</span> |
-  <span style="color:#f60">🔥 Heatmap</span>
-</div>
+    <div class="filtros">
+        <select id="filtroCDD" multiple></select>
+        <select id="filtroGN" multiple></select>
+        <select id="filtroInplant" multiple></select>
+        <select id="filtroRede" multiple></select>
+        <select id="filtroDia" multiple></select>
+    </div>
+    <button id="botaoHeatmap">Ativar Heatmap</button>
+    <div id="map"></div>
+    <div id="legenda">
+        <b>Legenda:</b><br>
+        Agenda: Verde<br>
+        Segunda: Vermelho<br>
+        Terça: Laranja<br>
+        Quarta: Amarelo<br>
+        Quinta: Roxo<br>
+        Sexta: Preto<br>
+        Sábado: Cinza<br>
+        Total: Azul
+    </div>
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
