@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 
   <style>
-    body {
+    html, body {
       width: 100%;
       height: 100%;
       margin: 0;
@@ -22,6 +22,7 @@
       bottom: 0;
       right: 0;
       left: 0;
+      z-index: 0;
     }
 
     .filtros {
@@ -33,13 +34,13 @@
       gap: 6px;
       flex-wrap: wrap;
       background-color: rgba(255, 255, 255, 0.6);
-      padding: 4px 6px;
+      padding: 6px 8px;
       border-radius: 8px;
     }
 
     .filtros select {
       width: 100px;
-      margin-bottom: 11px;
+      font-size: 11px;
     }
 
     .choices__inner {
@@ -85,7 +86,6 @@
   </style>
 </head>
 <body>
-
   <div class="filtros">
     <select id="filtroCDD" multiple></select>
     <select id="filtroGN" multiple></select>
@@ -113,7 +113,6 @@
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
   <script>
     const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
     const map = L.map('map').setView([-15.7797, -47.9297], 5);
@@ -171,7 +170,7 @@
         let cor = 'blue';
 
         if (diasSelecionados.length === 0) {
-          const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+          const dias = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
           for (let dia of dias) {
             if (d[dia]?.trim() === '1') {
               cor = coresPorDia[dia];
@@ -188,7 +187,7 @@
             }
           }
           if (!diaValido && diasSelecionados.includes('Agenda')) {
-            const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].every(dia => d[dia]?.trim() === '1');
+            const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
             if (isAgenda) {
               diaValido = true;
               cor = coresPorDia['Agenda'];
