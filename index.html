@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <title>Mapa Interativo - Ambev</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    
+
     <style>
         body {
             margin: 0;
@@ -22,29 +22,29 @@
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .filtros select {
-            font-size: 14px;
-            width: 170px;
+            font-size: 12px;
+            width: 160px;
             border-radius: 12px;
             border: 1px solid #ccc;
-            padding: 6px 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            padding: 4px 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             background-color: #f7f7f7;
         }
 
         .choices__inner {
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             background-color: #f7f7f7 !important;
-            font-size: 13px;
-            min-height: 36px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
+            font-size: 11px;
+            min-height: 32px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
         }
 
         .choices[data-type*=select-multiple] .choices__button {
-            font-size: 10px;
+            font-size: 9px;
         }
 
         #legenda {
@@ -52,10 +52,24 @@
             bottom: 10px;
             left: 10px;
             background-color: white;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 10px;
-            font-size: 13px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.15);
+            font-size: 11px;
+            box-shadow: 0 0 4px rgba(0,0,0,0.1);
+        }
+
+        #botaoHeatmap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
     </style>
 </head>
@@ -67,6 +81,7 @@
         <select id="filtroRede" multiple></select>
         <select id="filtroDia" multiple></select>
     </div>
+    <button id="botaoHeatmap">Ativar Heatmap</button>
     <div id="map"></div>
     <div id="legenda">
         <b>Legenda:</b><br>
@@ -81,15 +96,16 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
     <script>
         const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
-
         const map = L.map('map').setView([-15.7797, -47.9297], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         const grupoMarcadores = L.layerGroup().addTo(map);
+        let heatLayer;
 
         const filtros = {
             CDD: new Choices('#filtroCDD', { removeItemButton: true, placeholderValue: 'Escolha o CDD' }),
@@ -118,6 +134,8 @@
 
         function atualizarMapa(dados) {
             grupoMarcadores.clearLayers();
+            if (heatLayer) map.removeLayer(heatLayer);
+            let heatData = [];
 
             const cdd = filtros.CDD.getValue(true);
             const gn = filtros.GN.getValue(true);
@@ -155,7 +173,6 @@
                             break;
                         }
                     }
-
                     if (!diaValido && diasSelecionados.includes('Agenda')) {
                         const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
                         if (isAgenda) {
@@ -166,6 +183,7 @@
                 }
 
                 if (cddValido && gnValido && inplantValido && redeValido && diaValido) {
+                    heatData.push([lat, lon, 1]);
                     const marker = L.circleMarker([lat, lon], {
                         radius: 6,
                         color: cor,
@@ -176,6 +194,8 @@
                     grupoMarcadores.addLayer(marker);
                 }
             });
+
+            heatLayer = L.heatLayer(heatData, {radius: 25, blur: 15, maxZoom: 10});
         }
 
         Papa.parse(url, {
@@ -196,6 +216,14 @@
                 atualizarMapa(dados);
                 Object.values(filtros).forEach(f => {
                     f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
+                });
+
+                document.getElementById('botaoHeatmap').addEventListener('click', () => {
+                    if (map.hasLayer(heatLayer)) {
+                        map.removeLayer(heatLayer);
+                    } else {
+                        heatLayer.addTo(map);
+                    }
                 });
             }
         });
