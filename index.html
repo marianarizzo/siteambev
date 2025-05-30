@@ -48,15 +48,36 @@
         .choices[data-type*=select-multiple] .choices__button {
             font-size: 9px;
         }
+#legenda {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  z-index: 9998;
+  background: white;
+  border: 1px solid gray;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0px 1px 4px rgba(0,0,0,0.2);
+  max-width: 90vw;
+}
 
-    #legenda {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background-color: transparent;
-            padding: 6px 10px;
-            border-radius: 10px;
-            font-size: 11px;
+#legenda b {
+  display: block;
+  margin-bottom: 5px;
+}
+
+#legenda span {
+  display: block;
+  margin-bottom: 3px;
+}
+
+@media (max-width: 600px) {
+  #legenda {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+}
            
         }
 
