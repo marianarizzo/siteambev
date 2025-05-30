@@ -1,141 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <title>Mapa Interativo com Filtros</title>
+  <meta charset="UTF-8">
+  <title>Mapa Interativo Multifiltro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
-    #map { width: 100%; height: 100vh; }
-    .filtro-container {
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 95vh; width: 100%; }
+    .filter-container {
       position: absolute;
       top: 10px;
       left: 10px;
-      z-index: 9999;
+      z-index: 1000;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       background-color: transparent;
     }
-    select {
-      padding: 4px;
-      font-size: 14px;
+    .filter-container select {
+      padding: 5px;
       border-radius: 5px;
       border: 1px solid #ccc;
       background-color: white;
-      cursor: pointer;
+      font-size: 12px;
     }
-    .legenda {
+    .legend {
       position: absolute;
       bottom: 10px;
       left: 10px;
-      z-index: 9999;
-      background-color: white;
-      padding: 5px;
+      background: white;
+      padding: 6px;
       font-size: 12px;
       border-radius: 5px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
-<div class="filtro-container">
-  <select id="cdd-filter" multiple></select>
-  <select id="gn-filter" multiple></select>
-  <select id="inplant-filter" multiple></select>
-  <select id="rede-filter" multiple></select>
-</div>
-<div id="map"></div>
-<div class="legenda" id="legenda">
-  <b>Legenda:</b><br>
-  <span style="color: blue">●</span> Segunda<br>
-  <span style="color: green">●</span> Terça<br>
-  <span style="color: orange">●</span> Quarta<br>
-  <span style="color: purple">●</span> Quinta<br>
-  <span style="color: red">●</span> Sexta<br>
-  <span style="color: gray">●</span> Agendado
-</div>
+  <div class="filter-container">
+    <select id="cddFilter" multiple></select>
+    <select id="gnFilter" multiple></select>
+    <select id="inplantFilter" multiple></select>
+    <select id="redeFilter" multiple></select>
+    <select id="layerFilter" multiple></select>
+  </div>
 
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.1/papaparse.min.js"></script>
-<script>
-  let map = L.map('map').setView([-15.77972, -47.92972], 4);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  <div id="map"></div>
 
-  let markersLayer = L.layerGroup().addTo(map);
-  let originalData = [];
+  <div class="legend">
+    <strong>Legenda:</strong><br>
+    🔴 Segunda<br>
+    🟠 Terça<br>
+    🟡 Quarta<br>
+    🟢 Quinta<br>
+    🔵 Sexta<br>
+    ⚫ Agendado
+  </div>
 
-  function carregarCSV() {
-    const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20ASCD%20CO.csv';
-    Papa.parse(url, {
-      download: true,
-      header: true,
-      complete: function(results) {
-        originalData = results.data;
-        popularFiltros(originalData);
-        aplicarFiltros(originalData);
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script>
+    // Simulando dados remotos
+    const dataURL = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20ASCD%20CO.csv';
+
+    const map = L.map('map').setView([-15.78, -47.93], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const layers = {};
+
+    const filterElements = {
+      cdd: document.getElementById('cddFilter'),
+      gn: document.getElementById('gnFilter'),
+      inplant: document.getElementById('inplantFilter'),
+      rede: document.getElementById('redeFilter'),
+      layer: document.getElementById('layerFilter')
+    };
+
+    const layerColors = {
+      Segunda: 'red',
+      Terça: 'orange',
+      Quarta: 'yellow',
+      Quinta: 'green',
+      Sexta: 'blue',
+      Agendado: 'black',
+      Total: 'purple'
+    };
+
+    function createMarker(lat, lng, title, color) {
+      return L.circleMarker([lat, lng], {
+        radius: 6,
+        fillColor: color,
+        color: color,
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+      }).bindPopup(title);
+    }
+
+    function updateFilters(data, field, selectEl) {
+      const values = [...new Set(data.map(row => row[field]).filter(Boolean))].sort();
+      selectEl.innerHTML = '';
+      for (const val of values) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.text = val;
+        selectEl.appendChild(opt);
       }
-    });
-  }
+    }
 
-  function popularFiltros(data) {
-    const campos = ['CDD', 'GN', 'Inplant', 'Rede'];
-    campos.forEach(campo => {
-      let valoresUnicos = [...new Set(data.map(d => d[campo]).filter(Boolean))].sort();
-      const select = document.getElementById(`${campo.toLowerCase()}-filter`);
-      select.innerHTML = '';
-      valoresUnicos.forEach(valor => {
-        const option = document.createElement('option');
-        option.value = valor;
-        option.textContent = valor;
-        select.appendChild(option);
+    function getSelectedValues(select) {
+      return Array.from(select.selectedOptions).map(o => o.value);
+    }
+
+    function loadMap(data) {
+      for (const key in layers) {
+        map.removeLayer(layers[key]);
+      }
+
+      const selectedCDDs = getSelectedValues(filterElements.cdd);
+      const selectedGNs = getSelectedValues(filterElements.gn);
+      const selectedInplants = getSelectedValues(filterElements.inplant);
+      const selectedRedes = getSelectedValues(filterElements.rede);
+      const selectedLayers = getSelectedValues(filterElements.layer);
+
+      for (const row of data) {
+        if (
+          (selectedCDDs.length === 0 || selectedCDDs.includes(row.CDD)) &&
+          (selectedGNs.length === 0 || selectedGNs.includes(row.GN)) &&
+          (selectedInplants.length === 0 || selectedInplants.includes(row.Inplant)) &&
+          (selectedRedes.length === 0 || selectedRedes.includes(row.Rede))
+        ) {
+          for (const layerName of selectedLayers) {
+            if (layerName === 'Total' || row.Dia === layerName || (layerName === 'Agendado' && row.Agendado === 'Sim')) {
+              if (!layers[layerName]) layers[layerName] = L.layerGroup().addTo(map);
+              const color = layerColors[layerName] || 'gray';
+              const marker = createMarker(row.Latitude, row.Longitude, row.Loja, color);
+              marker.addTo(layers[layerName]);
+            }
+          }
+        }
+      }
+    }
+
+    function parseCSV(text) {
+      const lines = text.split('\n');
+      const headers = lines[0].split(',');
+      return lines.slice(1).map(line => {
+        const values = line.split(',');
+        const obj = {};
+        headers.forEach((h, i) => obj[h.trim()] = values[i]?.trim());
+        obj.Latitude = parseFloat(obj.Latitude);
+        obj.Longitude = parseFloat(obj.Longitude);
+        return obj;
       });
-    });
-  }
+    }
 
-  function aplicarFiltros(data) {
-    const selectedCDDs = Array.from(document.getElementById('cdd-filter').selectedOptions).map(o => o.value);
-    const selectedGNs = Array.from(document.getElementById('gn-filter').selectedOptions).map(o => o.value);
-    const selectedInplants = Array.from(document.getElementById('inplant-filter').selectedOptions).map(o => o.value);
-    const selectedRedes = Array.from(document.getElementById('rede-filter').selectedOptions).map(o => o.value);
+    fetch(dataURL)
+      .then(res => res.text())
+      .then(text => {
+        const data = parseCSV(text);
+        updateFilters(data, 'CDD', filterElements.cdd);
+        updateFilters(data, 'GN', filterElements.gn);
+        updateFilters(data, 'Inplant', filterElements.inplant);
+        updateFilters(data, 'Rede', filterElements.rede);
+        updateFilters(
+          ['Total', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Agendado'].map(d => ({ Dia: d })),
+          'Dia',
+          filterElements.layer
+        );
+        loadMap(data);
 
-    const filtrados = data.filter(d =>
-      (selectedCDDs.length === 0 || selectedCDDs.includes(d.CDD)) &&
-      (selectedGNs.length === 0 || selectedGNs.includes(d.GN)) &&
-      (selectedInplants.length === 0 || selectedInplants.includes(d.Inplant)) &&
-      (selectedRedes.length === 0 || selectedRedes.includes(d.Rede))
-    );
-    atualizarMapa(filtrados);
-  }
-
-  function atualizarMapa(data) {
-    markersLayer.clearLayers();
-    data.forEach(d => {
-      if (d.Latitude && d.Longitude) {
-        let cor = 'blue';
-        if (d.Dia === 'Terça') cor = 'green';
-        else if (d.Dia === 'Quarta') cor = 'orange';
-        else if (d.Dia === 'Quinta') cor = 'purple';
-        else if (d.Dia === 'Sexta') cor = 'red';
-        else if (d.Agenda === 'Sim') cor = 'gray';
-
-        const marcador = L.circleMarker([parseFloat(d.Latitude), parseFloat(d.Longitude)], {
-          radius: 6,
-          color: cor,
-          fillOpacity: 0.8
-        }).bindPopup(`<b>${d.Loja}</b><br>${d.CDD} - ${d.Inplant}`);
-
-        markersLayer.addLayer(marcador);
-      }
-    });
-  }
-
-  document.getElementById('cdd-filter').addEventListener('change', () => aplicarFiltros(originalData));
-  document.getElementById('gn-filter').addEventListener('change', () => aplicarFiltros(originalData));
-  document.getElementById('inplant-filter').addEventListener('change', () => aplicarFiltros(originalData));
-  document.getElementById('rede-filter').addEventListener('change', () => aplicarFiltros(originalData));
-
-  carregarCSV();
-</script>
+        for (const key in filterElements) {
+          filterElements[key].addEventListener('change', () => loadMap(data));
+        }
+      });
+  </script>
 </body>
 </html>
