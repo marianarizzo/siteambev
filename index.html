@@ -165,7 +165,7 @@
         let diaValido = false;
         let cor = 'gray';
 
-        for (let dia of (diasSelecionados.length ? diasSelecionados : Object.keys(coresPorDia))) {
+           for (let dia of (diasSelecionados.length ? diasSelecionados : Object.keys(coresPorDia))) {
           if (d[dia]?.trim() === '1') {
             diaValido = true;
             cor = coresPorDia[dia] || 'gray';
@@ -181,12 +181,12 @@
             fillColor: cor,
             fillOpacity: 0.8,
             weight: 1
-          }).bindPopup(
+            }).bindPopup(
             `<b>${d['Nome']}</b><br>
             CDD: ${d['CDD']}<br>
             GN: ${d['GN']}<br>
             Inplant: ${d['Inplant']}<br>
-            Rede: ${d['Rede']}`
+               Rede: ${d['Rede']}`
           );
 
           grupoMarcadores.addLayer(marker);
