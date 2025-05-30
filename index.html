@@ -73,13 +73,9 @@
       bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 9998;
+      z-index: 1000;
       background: transparent;
-      padding: 0;
-      border: none;
-      border-radius: 0;
       font-size: 12px;
-      box-shadow: none;
       text-align: center;
       pointer-events: none;
     }
@@ -113,6 +109,7 @@
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
   <script>
     const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
     const map = L.map('map').setView([-15.7797, -47.9297], 5);
@@ -121,22 +118,21 @@
     let heatLayer;
 
     const filtros = {
-      CDD: new Choices('#filtroCDD', { removeItemButton: true, placeholderValue: 'Escolha o CDD' }),
-      GN: new Choices('#filtroGN', { removeItemButton: true, placeholderValue: 'Filtrar por GN' }),
-      Inplant: new Choices('#filtroInplant', { removeItemButton: true, placeholderValue: 'Filtrar por Inplant' }),
-      Rede: new Choices('#filtroRede', { removeItemButton: true, placeholderValue: 'Filtrar por Rede' }),
-      Dia: new Choices('#filtroDia', { removeItemButton: true, placeholderValue: 'Dia da Semana' })
+      CDD: new Choices('#filtroCDD', { removeItemButton: true }),
+      GN: new Choices('#filtroGN', { removeItemButton: true }),
+      Inplant: new Choices('#filtroInplant', { removeItemButton: true }),
+      Rede: new Choices('#filtroRede', { removeItemButton: true }),
+      Dia: new Choices('#filtroDia', { removeItemButton: true })
     };
 
     const coresPorDia = {
-      'Agenda': 'green',
-      'Segunda': 'red',
-      'Terça': 'orange',
-      'Quarta': 'yellow',
-      'Quinta': 'purple',
+      'Agenda': 'red',
+      'Segunda': 'blue',
+      'Terça': 'green',
+      'Quarta': 'purple',
+      'Quinta': 'brown',
       'Sexta': 'black',
-      'Sábado': 'gray',
-      'Total': 'blue'
+      'Sábado': 'orange'
     };
 
     function preencherFiltros(dados, chave, controle) {
@@ -167,31 +163,13 @@
         const redeValido = rede.length === 0 || rede.includes(d['Rede']);
 
         let diaValido = false;
-        let cor = 'blue';
+        let cor = 'gray';
 
-        if (diasSelecionados.length === 0) {
-          const dias = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-          for (let dia of dias) {
-            if (d[dia]?.trim() === '1') {
-              cor = coresPorDia[dia];
-              diaValido = true;
-              break;
-            }
-          }
-        } else {
-          for (let dia of diasSelecionados) {
-            if (d[dia]?.trim() === '1') {
-              cor = coresPorDia[dia];
-              diaValido = true;
-              break;
-            }
-          }
-          if (!diaValido && diasSelecionados.includes('Agenda')) {
-            const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
-            if (isAgenda) {
-              diaValido = true;
-              cor = coresPorDia['Agenda'];
-            }
+        for (let dia of diasSelecionados.length ? diasSelecionados : Object.keys(coresPorDia)) {
+          if (d[dia]?.trim() === '1') {
+            diaValido = true;
+            cor = coresPorDia[dia] || 'gray';
+            break;
           }
         }
 
@@ -203,7 +181,13 @@
             fillColor: cor,
             fillOpacity: 0.8,
             weight: 1
-          }).bindPopup(`<b>${d['Nome']}</b><br>CDD: ${d['CDD']}<br>GN: ${d['GN']}<br>Inplant: ${d['Inplant']}<br>Rede: ${d['Rede']}`);
+          }).bindPopup(`
+            <b>${d['Nome']}</b><br>
+            CDD: ${d['CDD']}<br>
+            GN: ${d['GN']}<br>
+            Inplant: ${d['Inplant']}<br>
+            Rede: ${d['Rede']}`);
+
           grupoMarcadores.addLayer(marker);
         }
       });
@@ -221,10 +205,7 @@
         preencherFiltros(dados, 'GN', filtros.GN);
         preencherFiltros(dados, 'Inplant', filtros.Inplant);
         preencherFiltros(dados, 'Rede', filtros.Rede);
-
-        const diasSemana = ['Agenda', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-        filtros.Dia.clearChoices();
-        filtros.Dia.setChoices(diasSemana.map(d => ({ value: d, label: d })), 'value', 'label', true);
+        preencherFiltros(dados, 'Dia', filtros.Dia);
 
         atualizarMapa(dados);
         Object.values(filtros).forEach(f => {
