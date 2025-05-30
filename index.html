@@ -1,155 +1,146 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>Mapa Interativo com Filtros Completos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
-    #map { height: 100%; }
-    .filters {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 6px;
-      border-radius: 6px;
-      font-family: sans-serif;
-      font-size: 14px;
-    }
-    .legend {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 6px;
-      border-radius: 6px;
-      font-family: sans-serif;
-    }
-    select {
-      padding: 3px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interativo com Filtros</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <style>
+        body { margin: 0; font-family: sans-serif; }
+        #map { width: 100vw; height: 100vh; }
+        .filtros {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        select {
+            display: block;
+            width: 200px;
+            margin-bottom: 5px;
+        }
+        .legenda {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        .legenda span { display: inline-block; width: 10px; height: 10px; margin-right: 5px; }
+    </style>
 </head>
 <body>
-<div class="filters">
-  <label>Escolha o CDD:
-    <select id="filtroCDD" multiple></select>
-  </label>
-  <label>Tipo de Camada:
-    <select id="filtroDia" multiple></select>
-  </label>
-  <label>Filtrar por Inplant:
-    <select id="filtroInplant" multiple></select>
-  </label>
-  <label>Filtrar por GN:
-    <select id="filtroGN" multiple></select>
-  </label>
-  <label>Filtrar por Rede:
-    <select id="filtroRede" multiple></select>
-  </label>
+<div class="filtros">
+    <label>Escolha o CDD: <select id="filtro-cdd" multiple></select></label>
+    <label>Tipo de Camada: <select id="filtro-dia" multiple></select></label>
+    <label>Filtrar por Inplant: <select id="filtro-inplant" multiple></select></label>
+    <label>Filtrar por GN: <select id="filtro-gn" multiple></select></label>
+    <label>Filtrar por Rede: <select id="filtro-rede" multiple></select></label>
 </div>
 <div id="map"></div>
-<div class="legend">
-  <strong>Legenda:</strong><br>
-  <span style="color:red">●</span> Segunda<br>
-  <span style="color:orange">●</span> Terça<br>
-  <span style="color:green">●</span> Quarta<br>
-  <span style="color:blue">●</span> Quinta<br>
-  <span style="color:purple">●</span> Sexta<br>
-  <span style="color:black">●</span> Sábado<br>
-  <span style="color:gray">●</span> Agenda<br>
+<div class="legenda">
+    <div><span style="background:red"></span> Agenda</div>
+    <div><span style="background:blue"></span> Segunda</div>
+    <div><span style="background:orange"></span> Terça</div>
+    <div><span style="background:green"></span> Quarta</div>
+    <div><span style="background:purple"></span> Quinta</div>
+    <div><span style="background:black"></span> Sexta</div>
+    <div><span style="background:gray"></span> Sábado</div>
 </div>
 
 <script>
-const map = L.map('map').setView([-15.78, -47.93], 4);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 18
-}).addTo(map);
+const map = L.map('map').setView([-15.7797, -47.9297], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-const cores = {
-  "Segunda": "red",
-  "Terça": "orange",
-  "Quarta": "green",
-  "Quinta": "blue",
-  "Sexta": "purple",
-  "Sábado": "black",
-  "Agenda": "gray"
-};
+const marcadoresLayer = L.layerGroup().addTo(map);
+let dadosFiltrados = [];
 
-let markers = [];
-const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
-
-function limparMarcadores() {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
+function normalize(str) {
+    return str ? str.normalize("NFD").replace(/[̀-ͯ]/g, "") : "";
 }
 
-function atualizarMapa(data) {
-  limparMarcadores();
-  const cdds = getValoresSelecionados('filtroCDD');
-  const dias = getValoresSelecionados('filtroDia');
-  const inplants = getValoresSelecionados('filtroInplant');
-  const gns = getValoresSelecionados('filtroGN');
-  const redes = getValoresSelecionados('filtroRede');
-
-  data.forEach(row => {
-    if (
-      (cdds.length === 0 || cdds.includes(row.CDD)) &&
-      (dias.length === 0 || dias.includes(row.Dia)) &&
-      (inplants.length === 0 || inplants.includes(row.Inplant)) &&
-      (gns.length === 0 || gns.includes(row.GN)) &&
-      (redes.length === 0 || redes.includes(row.Rede))
-    ) {
-      const marker = L.circleMarker([parseFloat(row.Lat), parseFloat(row.Long)], {
-        color: cores[row.Dia] || 'gray',
-        radius: 8
-      }).addTo(map).bindPopup(`<strong>${row.Loja}</strong><br>${row.Dia}`);
-      markers.push(marker);
-    }
-  });
+function gerarIcone(dia) {
+    const cores = {
+        "agenda": "red",
+        "segunda": "blue",
+        "terca": "orange",
+        "quarta": "green",
+        "quinta": "purple",
+        "sexta": "black",
+        "sabado": "gray"
+    };
+    return L.divIcon({ className: '', html: `<i style='background:${cores[dia] || "black"}; border-radius:50%; width:12px; height:12px; display:block;'></i>` });
 }
 
-function getValoresSelecionados(id) {
-  return Array.from(document.getElementById(id).selectedOptions).map(opt => opt.value);
+function getSelecionados(id) {
+    const select = document.getElementById(id);
+    return Array.from(select.selectedOptions).map(opt => opt.value);
 }
 
-function preencherSelect(id, valores) {
-  const select = document.getElementById(id);
-  select.innerHTML = '';
-  [...new Set(valores)].sort().forEach(v => {
-    const option = document.createElement('option');
-    option.value = option.textContent = v;
-    select.appendChild(option);
-  });
+function atualizarFiltros(nomeCampo, idSelect) {
+    const valores = [...new Set(dadosFiltrados.map(d => d[nomeCampo]).filter(Boolean))].sort();
+    const select = document.getElementById(idSelect);
+    select.innerHTML = valores.map(v => `<option value="${v}">${v}</option>`).join('');
 }
 
-Papa.parse(url, {
-  download: true,
-  header: true,
-  complete: results => {
-    const data = results.data.filter(row => row.Lat && row.Long);
-    atualizarMapa(data);
+function filtrarDados() {
+    const cdds = getSelecionados('filtro-cdd');
+    const dias = getSelecionados('filtro-dia').map(normalize);
+    const inplants = getSelecionados('filtro-inplant');
+    const gns = getSelecionados('filtro-gn');
+    const redes = getSelecionados('filtro-rede');
 
-    preencherSelect('filtroCDD', data.map(r => r.CDD));
-    preencherSelect('filtroDia', data.map(r => r.Dia));
-    preencherSelect('filtroInplant', data.map(r => r.Inplant));
-    preencherSelect('filtroGN', data.map(r => r.GN));
-    preencherSelect('filtroRede', data.map(r => r.Rede));
+    marcadoresLayer.clearLayers();
 
-    ['filtroCDD','filtroDia','filtroInplant','filtroGN','filtroRede'].forEach(id => {
-      document.getElementById(id).addEventListener('change', () => atualizarMapa(data));
+    dadosFiltrados.forEach(p => {
+        const dia = normalize(p.Dia);
+        if (
+            (cdds.length === 0 || cdds.includes(p.CDD)) &&
+            (dias.length === 0 || dias.includes(dia)) &&
+            (inplants.length === 0 || inplants.includes(p.Inplant)) &&
+            (gns.length === 0 || gns.includes(p.GN)) &&
+            (redes.length === 0 || redes.includes(p.Rede))
+        ) {
+            const marker = L.marker([parseFloat(p.Latitude), parseFloat(p.Longitude)], {
+                icon: gerarIcone(dia)
+            }).bindPopup(`<strong>${p.Loja}</strong><br>Dia: ${p.Dia}<br>CDD: ${p.CDD}`);
+            marcadoresLayer.addLayer(marker);
+        }
     });
-  }
+}
+
+function carregarMapa() {
+    const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
+    Papa.parse(url, {
+        header: true,
+        download: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            dadosFiltrados = results.data;
+            atualizarFiltros('CDD', 'filtro-cdd');
+            atualizarFiltros('Dia', 'filtro-dia');
+            atualizarFiltros('Inplant', 'filtro-inplant');
+            atualizarFiltros('GN', 'filtro-gn');
+            atualizarFiltros('Rede', 'filtro-rede');
+            filtrarDados();
+        }
+    });
+}
+
+['filtro-cdd', 'filtro-dia', 'filtro-inplant', 'filtro-gn', 'filtro-rede'].forEach(id => {
+    document.getElementById(id).addEventListener('change', filtrarDados);
 });
+
+carregarMapa();
 </script>
 </body>
 </html>
