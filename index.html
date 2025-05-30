@@ -75,30 +75,13 @@
     </style>
 </head>
 <body>
-    <div class="filtros">
-        <div style="position: absolute; top: 10px; left: 10px; z-index: 1000; display: flex; gap: 6px; flex-wrap: wrap;">
-<div style="background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px; font-size: 12px;">
-<label for="cddSelect"><b>CDD:</b></label><br/>
-<select id="filtroCDD" multiple="" size="1" style="width: 100px; font-size: 11px;"></select>
-    </div>
-<div style="background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px; font-size: 12px;">
-<label for="filtroGN"><b>GN:</b></label><br/>
-<select id="filtroGN" multiple="" size="1" style="width: 120px; font-size: 11px;"></select>
-</div>
-            <div style="background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px; font-size: 12px;">
-<label for="filtroInplant"><b>Inplant:</b></label><br/>
-<select id="filtroInplant" multiple="" size="1" style="width: 120px; font-size: 11px;"></select>
-</div>
-    
-       <div style="background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px; font-size: 12px;">
-<label for="filtroRede"><b>Rede:</b></label><br/>
-<select id="filtroRede" multiple="" size="1" style="width: 120px; font-size: 11px;"></select>
-</div>
-        
-     </div>
-        <div style="background: rgba(255,255,255,0.6); padding: 4px 6px; border-radius: 4px; font-size: 12px;">
-<label for="filtroDia"><b>Dia:</b></label><br/>
-<select id="filtroDia" multiple="" size="1" style="width: 90px; font-size: 11px;">
+   <div class="filtros">
+        <select id="filtroCDD" multiple></select>
+        <select id="filtroGN" multiple></select>
+        <select id="filtroInplant" multiple></select>
+        <select id="filtroRede" multiple></select>
+        <select id="filtroDia" multiple></select>
+  </div>
     <button id="botaoHeatmap">Ativar Heatmap</button>
     <div id="map"></div>
 
