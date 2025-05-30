@@ -25,22 +25,25 @@
       z-index: 0;
     }
 
-    .filtros {
+.filtros {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    top: 10px;
+    left: 10px;
     z-index: 1000;
-    padding: 12px;
-    border-radius: 12px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;     /* agora lado a lado */
+    flex-wrap: wrap;         /* quebra linha se não couber */
     gap: 8px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.1);
 }
 
 .filtros select {
     font-size: 13px;
-    width: 260px; /* AUMENTADO de 200px para 260px */
-    height: 40px;
+    width: 200px;
+    height: 38px;
     border-radius: 10px;
     border: 1px solid #ccc;
     padding: 6px 10px;
