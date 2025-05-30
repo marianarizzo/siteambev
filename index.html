@@ -41,14 +41,13 @@ function toggleDropdown() {
             </style>
 <style>
   .menu-suspenso {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-    background-color: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+   position: fixed;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 999;
   }
 
   .menu-suspenso label {
@@ -59,31 +58,39 @@ function toggleDropdown() {
     width: 200px;
     margin-bottom: 10px;
   }
-  </style>
+</style>
 </head>
 <body>
-  <div class="filter-box">
-    <label>Escolha o CDD:</label>
+<div class="menu-suspenso">
+<label>Escolha o CDD:</label>
     <select id="cddSelect" multiple></select>
-    <label>Tipo de Camada:</label>
-    <select id="diaSelect" multiple>
-      <option>Segunda</option>
-      <option>Terça</option>
-      <option>Quarta</option>
-      <option>Quinta</option>
-      <option>Sexta</option>
-      <option>Sábado</option>
-      <option>Agenda</option>
-    </select>
-    <label>Filtrar por Inplant:</label>
+    <label>Tipo de Camada:</label><option value="">Todos</option>
+<option value="GAM">CDD GAM</option>
+<option value="CUI">CDD CUI</option>
+<option value="GOI">CDD GOI</option>
+<option value="MAN">CDD MAN</option>
+</select><br/>
+<label for="selectCamada">Tipo de camada:</label><br/>
+<select id="selectCamada" multiple style="height: 2em;" onclick="this.size=this.options.length;" onblur="this.size=1;" onchange="filtrarCamadas()">
+<option value="">Todos</option>
+<option value="total">Total</option>
+<option value="segunda">Segunda</option>
+<option value="terca">Terça</option>
+<option value="quarta">Quarta</option>
+<option value="quinta">Quinta</option>
+<option value="sexta">Sexta</option>
+<option value="sabado">Sábado</option>
+<option value="agenda">Agendado</option>
+</select>
+ <label>Filtrar por Inplant:</label>
     <select id="inplantSelect" multiple></select>
     <label>Filtrar por GN:</label>
     <select id="gnSelect" multiple></select>
     <label>Filtrar por Rede:</label>
     <select id="redeSelect" multiple></select>
-  </div><style>
+  </div>
 
-
+<style>
 #legenda {
   position: fixed;
   bottom: 10px;
@@ -134,14 +141,19 @@ function toggleDropdown() {
     const cddSelecionado = document.getElementById("selectCDD").value;
     const camadaSelecionada = document.getElementById("selectCamada").value;
     const inplantSelecionado = document.getElementById("selectInplant").value.toLowerCase();
+const GNSelecionado = document.getElementById("SelectGN").value.toLowerCase();
+const RedeSelecionado = document.getElementById("SelectRede").value.toLowerCase();
 
     document.querySelectorAll('.leaflet-control-layers-overlays input').forEach(input => {
       const label = input.nextSibling.textContent.trim().toLowerCase();
       const visivelCDD = cddSelecionado === "" || label.includes(cddSelecionado.toLowerCase());
       const visivelCamada = camadaSelecionada === "" || label.includes(camadaSelecionada.toLowerCase());
       const visivelInplant = inplantSelecionado === "" || label.includes(inplantSelecionado);
+const visivelGN = GNSelecionado === "" || label.includes(GNSelecionado);
+const visivelRede = RedeSelecionado === "" || label.includes(RedeSelecionado);
 
-      const deveMostrar = visivelCDD && visivelCamada && visivelInplant;
+
+      const deveMostrar = visivelCDD && visivelCamada && visivelInplant && visivelGN && visivelRede;
       if (input.checked !== deveMostrar) {
         input.checked = deveMostrar;
         input.dispatchEvent(new Event('click'));
@@ -149,31 +161,44 @@ function toggleDropdown() {
     });
   }
 
-  // Preenche automaticamente os Inplants únicos no select
-  function preencherInplants() {
-    const inplants = new Set();
-    document.querySelectorAll('.leaflet-control-layers-overlays label').forEach(label => {
-      const texto = label.innerText;
-      const match = texto.match(/Inplant: ([^<\n]+)/i);
-      if (match && match[1]) {
-        inplants.add(match[1].trim());
-      }
-    });
+ const csvUrl = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
 
-    const select = document.getElementById("selectInplant");
-    inplants.forEach(inplant => {
-      const option = document.createElement("option");
-      option.value = inplant;
-      option.textContent = inplant;
-      select.appendChild(option);
-    });
-  }
+ function populateSelect(selectId, values) {
+      const select = document.getElementById(selectId);
+      select.innerHTML = '';
+      const sorted = [...new Set(values)].sort();
+      sorted.forEach(v => {
+        const option = document.createElement('option');
+        option.value = v;
+        option.text = v;
+        select.appendChild(option);
+      });
+      new Choices(select, { removeItemButton: true });
+    }
 
-  setTimeout(preencherInplants, 2000);
-</script>
-</body>
-<script>
-    
+    function applyFilters(data) {
+      const cddSelecionado = getSelectedValues('selectCDD');
+      const camadaSelecionada = getSelectedValues('selectCamada');
+      const inplantSelecionado = getSelectedValues('selectInplant');
+      const GNSelecionado = getSelectedValues('SelectGN');
+      const RedeSelecionado = getSelectedValues('SelectRede');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
     
             var map_3e957a8cffea5c02a02e3640cbb3ea47 = L.map(
                 "map_3e957a8cffea5c02a02e3640cbb3ea47",
