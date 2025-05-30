@@ -1,177 +1,155 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Mapa Interativo - ASCD</title>
+  <meta charset="utf-8" />
+  <title>Mapa Interativo com Filtros Completos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 92vh; width: 100vw; }
-    .filter-container {
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100%; }
+    .filters {
       position: absolute;
       top: 10px;
       left: 10px;
       z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 8px;
-      padding: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .filter-container label {
-      font-size: 12px;
-      font-weight: bold;
-    }
-    select {
-      padding: 4px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 12px;
-      width: 140px;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 6px;
+      border-radius: 6px;
+      font-family: sans-serif;
+      font-size: 14px;
     }
     .legend {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      background-color: rgba(255,255,255,0.9);
-      padding: 10px;
-      font-size: 12px;
-      z-index: 999;
-      border-top-right-radius: 8px;
-      box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 6px;
+      border-radius: 6px;
+      font-family: sans-serif;
+    }
+    select {
+      padding: 3px;
     }
   </style>
 </head>
 <body>
-  <div class="filter-container">
-    <div>
-      <label for="cddFilter">Escolha o CDD:</label>
-      <select id="cddFilter" multiple></select>
-    </div>
-    <div>
-      <label for="camadaFilter">Tipo de Camada:</label>
-      <select id="camadaFilter" multiple></select>
-    </div>
-    <div>
-      <label for="inplantFilter">Filtrar por Inplant:</label>
-      <select id="inplantFilter" multiple></select>
-    </div>
-    <div>
-      <label for="gnFilter">Filtrar por GN:</label>
-      <select id="gnFilter" multiple></select>
-    </div>
-    <div>
-      <label for="redeFilter">Filtrar por Rede:</label>
-      <select id="redeFilter" multiple></select>
-    </div>
-  </div>
-  <div id="map"></div>
-  <div class="legend">
-    <strong>Legenda:</strong><br>
-    🔵 Total CDD<br>
-    🟢 Agenda<br>
-    🔴 Segunda<br>
-    🟠 Terça<br>
-    🟡 Quarta<br>
-    🟣 Quinta<br>
-    ⚫ Sexta<br>
-    ⚪ Sábado
-  </div>
+<div class="filters">
+  <label>Escolha o CDD:
+    <select id="filtroCDD" multiple></select>
+  </label>
+  <label>Tipo de Camada:
+    <select id="filtroDia" multiple></select>
+  </label>
+  <label>Filtrar por Inplant:
+    <select id="filtroInplant" multiple></select>
+  </label>
+  <label>Filtrar por GN:
+    <select id="filtroGN" multiple></select>
+  </label>
+  <label>Filtrar por Rede:
+    <select id="filtroRede" multiple></select>
+  </label>
+</div>
+<div id="map"></div>
+<div class="legend">
+  <strong>Legenda:</strong><br>
+  <span style="color:red">●</span> Segunda<br>
+  <span style="color:orange">●</span> Terça<br>
+  <span style="color:green">●</span> Quarta<br>
+  <span style="color:blue">●</span> Quinta<br>
+  <span style="color:purple">●</span> Sexta<br>
+  <span style="color:black">●</span> Sábado<br>
+  <span style="color:gray">●</span> Agenda<br>
+</div>
 
-  <script>
-    const map = L.map('map').setView([-15.78, -47.93], 5);
+<script>
+const map = L.map('map').setView([-15.78, -47.93], 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18
+}).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+const cores = {
+  "Segunda": "red",
+  "Terça": "orange",
+  "Quarta": "green",
+  "Quinta": "blue",
+  "Sexta": "purple",
+  "Sábado": "black",
+  "Agenda": "gray"
+};
 
-    const csvUrl = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
+let markers = [];
+const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
 
-    async function loadData() {
-      const res = await fetch(csvUrl);
-      const data = await res.text();
-      const rows = data.split('\n').slice(1).map(r => r.split(','));
+function limparMarcadores() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+}
 
-      const headers = ["CDD", "Camada", "Latitude", "Longitude", "Inplant", "GN", "Rede", "Dia"];
-      const markers = [];
+function atualizarMapa(data) {
+  limparMarcadores();
+  const cdds = getValoresSelecionados('filtroCDD');
+  const dias = getValoresSelecionados('filtroDia');
+  const inplants = getValoresSelecionados('filtroInplant');
+  const gns = getValoresSelecionados('filtroGN');
+  const redes = getValoresSelecionados('filtroRede');
 
-      const filterValues = {
-        cdd: new Set(),
-        camada: new Set(),
-        inplant: new Set(),
-        gn: new Set(),
-        rede: new Set(),
-      };
-
-      rows.forEach(row => {
-        if (row.length < 8) return;
-        const record = Object.fromEntries(headers.map((h, i) => [h, row[i]]));
-
-        filterValues.cdd.add(record.CDD);
-        filterValues.camada.add(record.Camada);
-        filterValues.inplant.add(record.Inplant);
-        filterValues.gn.add(record.GN);
-        filterValues.rede.add(record.Rede);
-
-        const icon = L.divIcon({
-          className: 'custom-div-icon',
-          html: `<div style="font-size:14px">🔵</div>`
-        });
-
-        const marker = L.marker([parseFloat(record.Latitude), parseFloat(record.Longitude)], { icon })
-          .bindPopup(`<strong>${record.CDD}</strong><br>${record.Rede}<br>${record.Dia}`);
-        marker._meta = record;
-        markers.push(marker);
-        marker.addTo(map);
-      });
-
-      populateFilters(filterValues);
-
-      document.querySelectorAll('select').forEach(sel => sel.addEventListener('change', () => {
-        const selected = {
-          cdd: getSelected('cddFilter'),
-          camada: getSelected('camadaFilter'),
-          inplant: getSelected('inplantFilter'),
-          gn: getSelected('gnFilter'),
-          rede: getSelected('redeFilter'),
-        };
-
-        markers.forEach(m => {
-          const visible =
-            (selected.cdd.length === 0 || selected.cdd.includes(m._meta.CDD)) &&
-            (selected.camada.length === 0 || selected.camada.includes(m._meta.Camada)) &&
-            (selected.inplant.length === 0 || selected.inplant.includes(m._meta.Inplant)) &&
-            (selected.gn.length === 0 || selected.gn.includes(m._meta.GN)) &&
-            (selected.rede.length === 0 || selected.rede.includes(m._meta.Rede));
-
-          if (visible) m.addTo(map);
-          else map.removeLayer(m);
-        });
-      }));
+  data.forEach(row => {
+    if (
+      (cdds.length === 0 || cdds.includes(row.CDD)) &&
+      (dias.length === 0 || dias.includes(row.Dia)) &&
+      (inplants.length === 0 || inplants.includes(row.Inplant)) &&
+      (gns.length === 0 || gns.includes(row.GN)) &&
+      (redes.length === 0 || redes.includes(row.Rede))
+    ) {
+      const marker = L.circleMarker([parseFloat(row.Lat), parseFloat(row.Long)], {
+        color: cores[row.Dia] || 'gray',
+        radius: 8
+      }).addTo(map).bindPopup(`<strong>${row.Loja}</strong><br>${row.Dia}`);
+      markers.push(marker);
     }
+  });
+}
 
-    function populateFilters(values) {
-      for (const [key, set] of Object.entries(values)) {
-        const sel = document.getElementById(`${key}Filter`);
-        [...set].sort().forEach(val => {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.text = val;
-          sel.appendChild(opt);
-        });
-      }
-    }
+function getValoresSelecionados(id) {
+  return Array.from(document.getElementById(id).selectedOptions).map(opt => opt.value);
+}
 
-    function getSelected(id) {
-      return Array.from(document.getElementById(id).selectedOptions).map(o => o.value);
-    }
+function preencherSelect(id, valores) {
+  const select = document.getElementById(id);
+  select.innerHTML = '';
+  [...new Set(valores)].sort().forEach(v => {
+    const option = document.createElement('option');
+    option.value = option.textContent = v;
+    select.appendChild(option);
+  });
+}
 
-    loadData();
-  </script>
+Papa.parse(url, {
+  download: true,
+  header: true,
+  complete: results => {
+    const data = results.data.filter(row => row.Lat && row.Long);
+    atualizarMapa(data);
+
+    preencherSelect('filtroCDD', data.map(r => r.CDD));
+    preencherSelect('filtroDia', data.map(r => r.Dia));
+    preencherSelect('filtroInplant', data.map(r => r.Inplant));
+    preencherSelect('filtroGN', data.map(r => r.GN));
+    preencherSelect('filtroRede', data.map(r => r.Rede));
+
+    ['filtroCDD','filtroDia','filtroInplant','filtroGN','filtroRede'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => atualizarMapa(data));
+    });
+  }
+});
+</script>
 </body>
 </html>
