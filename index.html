@@ -1,142 +1,177 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Interativo com Filtros</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link href="https://cdn.jsdelivr.net/npm/selectize/dist/css/selectize.bootstrap3.css" rel="stylesheet">
-    <style>
-        #map { height: 100vh; width: 100vw; }
-        .filters {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            z-index: 1000;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        }
-        .legend {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: white;
-            padding: 10px;
-            font-size: 12px;
-            border-radius: 10px;
-        }
-        .legend span {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            margin-right: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Mapa Interativo - ASCD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 92vh; width: 100vw; }
+    .filter-container {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .filter-container label {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    select {
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 12px;
+      width: 140px;
+    }
+    .legend {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      background-color: rgba(255,255,255,0.9);
+      padding: 10px;
+      font-size: 12px;
+      z-index: 999;
+      border-top-right-radius: 8px;
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
-    <div class="filters">
-        <select id="cddFilter" placeholder="Escolha o CDD" multiple></select>
-        <select id="dayFilter" placeholder="Tipo de Camada" multiple></select>
-        <select id="inplantFilter" placeholder="Filtrar por Inplant" multiple></select>
-        <select id="gnFilter" placeholder="Filtrar por GN" multiple></select>
-        <select id="redeFilter" placeholder="Filtrar por Rede" multiple></select>
+  <div class="filter-container">
+    <div>
+      <label for="cddFilter">Escolha o CDD:</label>
+      <select id="cddFilter" multiple></select>
     </div>
-    <div id="map"></div>
-    <div class="legend">
-        <strong>Legenda:</strong><br>
-        <span style="background:red;"></span> Segunda<br>
-        <span style="background:orange;"></span> Terça<br>
-        <span style="background:yellow;"></span> Quarta<br>
-        <span style="background:green;"></span> Quinta<br>
-        <span style="background:blue;"></span> Sexta<br>
-        <span style="background:purple;"></span> Sábado<br>
-        <span style="background:gray;"></span> Agenda
+    <div>
+      <label for="camadaFilter">Tipo de Camada:</label>
+      <select id="camadaFilter" multiple></select>
     </div>
+    <div>
+      <label for="inplantFilter">Filtrar por Inplant:</label>
+      <select id="inplantFilter" multiple></select>
+    </div>
+    <div>
+      <label for="gnFilter">Filtrar por GN:</label>
+      <select id="gnFilter" multiple></select>
+    </div>
+    <div>
+      <label for="redeFilter">Filtrar por Rede:</label>
+      <select id="redeFilter" multiple></select>
+    </div>
+  </div>
+  <div id="map"></div>
+  <div class="legend">
+    <strong>Legenda:</strong><br>
+    🔵 Total CDD<br>
+    🟢 Agenda<br>
+    🔴 Segunda<br>
+    🟠 Terça<br>
+    🟡 Quarta<br>
+    🟣 Quinta<br>
+    ⚫ Sexta<br>
+    ⚪ Sábado
+  </div>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.1/papaparse.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/selectize"></script>
-    <script>
-        const map = L.map('map').setView([-15.78, -47.93], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  <script>
+    const map = L.map('map').setView([-15.78, -47.93], 5);
 
-        const layerGroup = L.layerGroup().addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-        const colorMap = {
-            'Segunda': 'red',
-            'Terça': 'orange',
-            'Quarta': 'yellow',
-            'Quinta': 'green',
-            'Sexta': 'blue',
-            'Sábado': 'purple',
-            'Agenda': 'gray'
-        };
+    const csvUrl = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
 
-        const filters = {
-            cdd: [],
-            day: [],
-            inplant: [],
-            gn: [],
-            rede: []
-        };
+    async function loadData() {
+      const res = await fetch(csvUrl);
+      const data = await res.text();
+      const rows = data.split('\n').slice(1).map(r => r.split(','));
 
-        function updateMap(data) {
-            layerGroup.clearLayers();
-            data.forEach(row => {
-                if (
-                    (filters.cdd.length === 0 || filters.cdd.includes(row.CDD)) &&
-                    (filters.day.length === 0 || filters.day.includes(row.Dia)) &&
-                    (filters.inplant.length === 0 || filters.inplant.includes(row.Inplant)) &&
-                    (filters.gn.length === 0 || filters.gn.includes(row.GN)) &&
-                    (filters.rede.length === 0 || filters.rede.includes(row.Rede))
-                ) {
-                    const marker = L.circleMarker([+row.Latitude, +row.Longitude], {
-                        color: colorMap[row.Dia] || 'black',
-                        radius: 6
-                    }).bindPopup(`<strong>${row.Loja}</strong><br>${row.Rede}<br>${row.CDD}<br>${row.Inplant}<br>${row.GN}<br>${row.Dia}`);
-                    layerGroup.addLayer(marker);
-                }
-            });
-        }
+      const headers = ["CDD", "Camada", "Latitude", "Longitude", "Inplant", "GN", "Rede", "Dia"];
+      const markers = [];
 
-        function populateFilters(data) {
-            const cdds = [...new Set(data.map(r => r.CDD))];
-            const days = [...new Set(data.map(r => r.Dia))];
-            const inplants = [...new Set(data.map(r => r.Inplant))];
-            const gns = [...new Set(data.map(r => r.GN))];
-            const redes = [...new Set(data.map(r => r.Rede))];
+      const filterValues = {
+        cdd: new Set(),
+        camada: new Set(),
+        inplant: new Set(),
+        gn: new Set(),
+        rede: new Set(),
+      };
 
-            function initSelect(id, values, key) {
-                const select = $(id);
-                values.forEach(val => select.append(new Option(val, val)));
-                select.selectize({
-                    plugins: ['remove_button'],
-                    onChange: val => {
-                        filters[key] = val;
-                        updateMap(window.csvData);
-                    }
-                });
-            }
+      rows.forEach(row => {
+        if (row.length < 8) return;
+        const record = Object.fromEntries(headers.map((h, i) => [h, row[i]]));
 
-            initSelect('#cddFilter', cdds, 'cdd');
-            initSelect('#dayFilter', days, 'day');
-            initSelect('#inplantFilter', inplants, 'inplant');
-            initSelect('#gnFilter', gns, 'gn');
-            initSelect('#redeFilter', redes, 'rede');
-        }
+        filterValues.cdd.add(record.CDD);
+        filterValues.camada.add(record.Camada);
+        filterValues.inplant.add(record.Inplant);
+        filterValues.gn.add(record.GN);
+        filterValues.rede.add(record.Rede);
 
-        Papa.parse('https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv', {
-            download: true,
-            header: true,
-            complete: results => {
-                window.csvData = results.data;
-                populateFilters(results.data);
-                updateMap(results.data);
-            }
+        const icon = L.divIcon({
+          className: 'custom-div-icon',
+          html: `<div style="font-size:14px">🔵</div>`
         });
-    </script>
+
+        const marker = L.marker([parseFloat(record.Latitude), parseFloat(record.Longitude)], { icon })
+          .bindPopup(`<strong>${record.CDD}</strong><br>${record.Rede}<br>${record.Dia}`);
+        marker._meta = record;
+        markers.push(marker);
+        marker.addTo(map);
+      });
+
+      populateFilters(filterValues);
+
+      document.querySelectorAll('select').forEach(sel => sel.addEventListener('change', () => {
+        const selected = {
+          cdd: getSelected('cddFilter'),
+          camada: getSelected('camadaFilter'),
+          inplant: getSelected('inplantFilter'),
+          gn: getSelected('gnFilter'),
+          rede: getSelected('redeFilter'),
+        };
+
+        markers.forEach(m => {
+          const visible =
+            (selected.cdd.length === 0 || selected.cdd.includes(m._meta.CDD)) &&
+            (selected.camada.length === 0 || selected.camada.includes(m._meta.Camada)) &&
+            (selected.inplant.length === 0 || selected.inplant.includes(m._meta.Inplant)) &&
+            (selected.gn.length === 0 || selected.gn.includes(m._meta.GN)) &&
+            (selected.rede.length === 0 || selected.rede.includes(m._meta.Rede));
+
+          if (visible) m.addTo(map);
+          else map.removeLayer(m);
+        });
+      }));
+    }
+
+    function populateFilters(values) {
+      for (const [key, set] of Object.entries(values)) {
+        const sel = document.getElementById(`${key}Filter`);
+        [...set].sort().forEach(val => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.text = val;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function getSelected(id) {
+      return Array.from(document.getElementById(id).selectedOptions).map(o => o.value);
+    }
+
+    loadData();
+  </script>
 </body>
 </html>
