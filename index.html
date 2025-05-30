@@ -4,15 +4,13 @@
     <meta charset="utf-8" />
     <title>Mapa Interativo - Ambev</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js" />
+
     <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
-        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen; }
         #map { height: 90vh; width: 100%; }
 
         .filtros {
@@ -25,7 +23,7 @@
             gap: 8px;
         }
 
-        .filtros select {
+        .filtros select, .filtros button {
             font-size: 14px;
             width: 170px;
             border-radius: 12px;
@@ -41,10 +39,6 @@
             font-size: 13px;
             min-height: 36px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
-        }
-
-        .choices[data-type*=select-multiple] .choices__button {
-            font-size: 10px;
         }
 
         #legenda {
@@ -66,7 +60,9 @@
         <select id="filtroInplant" multiple></select>
         <select id="filtroRede" multiple></select>
         <select id="filtroDia" multiple></select>
+        <button onclick="toggleHeatmap()">Ativar/Desativar Heatmap</button>
     </div>
+
     <div id="map"></div>
     <div id="legenda">
         <b>Legenda:</b><br>
@@ -81,8 +77,9 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 
     <script>
         const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
@@ -90,6 +87,7 @@
         const map = L.map('map').setView([-15.7797, -47.9297], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         const grupoMarcadores = L.layerGroup().addTo(map);
+        let heatLayer = null;
 
         const filtros = {
             CDD: new Choices('#filtroCDD', { removeItemButton: true, placeholderValue: 'Escolha o CDD' }),
@@ -100,14 +98,9 @@
         };
 
         const coresPorDia = {
-            'Agenda': 'green',
-            'Segunda': 'red',
-            'Terça': 'orange',
-            'Quarta': 'yellow',
-            'Quinta': 'purple',
-            'Sexta': 'black',
-            'Sábado': 'gray',
-            'Total': 'blue'
+            'Agenda': 'green', 'Segunda': 'red', 'Terça': 'orange',
+            'Quarta': 'yellow', 'Quinta': 'purple', 'Sexta': 'black',
+            'Sábado': 'gray', 'Total': 'blue'
         };
 
         function preencherFiltros(dados, chave, controle) {
@@ -118,6 +111,8 @@
 
         function atualizarMapa(dados) {
             grupoMarcadores.clearLayers();
+            if (heatLayer) map.removeLayer(heatLayer);
+            const pontosHeatmap = [];
 
             const cdd = filtros.CDD.getValue(true);
             const gn = filtros.GN.getValue(true);
@@ -155,7 +150,6 @@
                             break;
                         }
                     }
-
                     if (!diaValido && diasSelecionados.includes('Agenda')) {
                         const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
                         if (isAgenda) {
@@ -167,15 +161,24 @@
 
                 if (cddValido && gnValido && inplantValido && redeValido && diaValido) {
                     const marker = L.circleMarker([lat, lon], {
-                        radius: 6,
-                        color: cor,
-                        fillColor: cor,
-                        fillOpacity: 0.8,
-                        weight: 1
+                        radius: 6, color: cor, fillColor: cor, fillOpacity: 0.8, weight: 1
                     }).bindPopup(`<b>${d['Nome']}</b><br>CDD: ${d['CDD']}<br>GN: ${d['GN']}<br>Inplant: ${d['Inplant']}<br>Rede: ${d['Rede']}`);
                     grupoMarcadores.addLayer(marker);
+                    pontosHeatmap.push([lat, lon, 1]);
                 }
             });
+
+            heatLayer = L.heatLayer(pontosHeatmap, { radius: 20, blur: 15, maxZoom: 10 });
+        }
+
+        function toggleHeatmap() {
+            if (heatLayer) {
+                if (map.hasLayer(heatLayer)) {
+                    map.removeLayer(heatLayer);
+                } else {
+                    heatLayer.addTo(map);
+                }
+            }
         }
 
         Papa.parse(url, {
