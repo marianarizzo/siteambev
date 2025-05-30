@@ -1,193 +1,232 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <title>Mapa Interativo - Ambev</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <title>Mapa Interativo - Ambev</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-  <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen; }
-    #map { height: 90vh; width: 100%; }
-    .filtros {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .filtros select, .filtros button {
-      font-size: 14px;
-      width: 170px;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-      background-color: #f7f7f7;
-    }
-    .choices__inner {
-      border-radius: 12px !important;
-      background-color: #f7f7f7 !important;
-      font-size: 13px;
-      min-height: 36px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
-    }
-    .choices[data-type*=select-multiple] .choices__button {
-      font-size: 10px;
-    }
-    #legenda {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background-color: white;
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.15);
-    }
-  </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+        }
+        #map { height: 90vh; width: 100%; }
+
+        .filtros {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filtros select {
+            font-size: 12px;
+            width: 160px;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            background-color: #f7f7f7;
+        }
+
+        .choices__inner {
+            border-radius: 10px !important;
+            background-color: #f7f7f7 !important;
+            font-size: 11px;
+            min-height: 32px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+        }
+
+        .choices[data-type*=select-multiple] .choices__button {
+            font-size: 9px;
+        }
+
+        #legenda {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            box-shadow: 0 0 4px rgba(0,0,0,0.1);
+        }
+
+        #botaoHeatmap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 6px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+    </style>
 </head>
 <body>
-  <div class="filtros">
-    <select id="filtroCDD" multiple></select>
-    <select id="filtroGN" multiple></select>
-    <select id="filtroInplant" multiple></select>
-    <select id="filtroRede" multiple></select>
-    <select id="filtroDia" multiple></select>
-    <button id="heatmapToggle">Alternar Heatmap</button>
-  </div>
+    <div class="filtros">
+        <select id="filtroCDD" multiple></select>
+        <select id="filtroGN" multiple></select>
+        <select id="filtroInplant" multiple></select>
+        <select id="filtroRede" multiple></select>
+        <select id="filtroDia" multiple></select>
+    </div>
+    <button id="botaoHeatmap">Ativar Heatmap</button>
+    <div id="map"></div>
+    <div id="legenda">
+        <b>Legenda:</b><br>
+        Agenda: Verde<br>
+        Segunda: Vermelho<br>
+        Terça: Laranja<br>
+        Quarta: Amarelo<br>
+        Quinta: Roxo<br>
+        Sexta: Preto<br>
+        Sábado: Cinza<br>
+        Total: Azul
+    </div>
 
-  <div id="map"></div>
-  <div id="legenda">
-    <b>Legenda:</b>
-    <span style="color:green">&#9679; Agenda</span> |
-    <span style="color:red">&#9679; Segunda</span> |
-    <span style="color:orange">&#9679; Terça</span> |
-    <span style="color:yellow">&#9679; Quarta</span> |
-    <span style="color:purple">&#9679; Quinta</span> |
-    <span style="color:black">&#9679; Sexta</span> |
-    <span style="color:gray">&#9679; Sábado</span> |
-    <span style="color:#ff6600">&#128293; Heatmap</span>
-  </div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script>
+        const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
+        const map = L.map('map').setView([-15.7797, -47.9297], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const grupoMarcadores = L.layerGroup().addTo(map);
+        let heatLayer;
 
-  <script>
-    const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
-    const map = L.map('map').setView([-15.7797, -47.9297], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    const grupoMarcadores = L.layerGroup().addTo(map);
-    let heatLayer;
+        const filtros = {
+            CDD: new Choices('#filtroCDD', { removeItemButton: true, placeholderValue: 'Escolha o CDD' }),
+            GN: new Choices('#filtroGN', { removeItemButton: true, placeholderValue: 'Filtrar por GN' }),
+            Inplant: new Choices('#filtroInplant', { removeItemButton: true, placeholderValue: 'Filtrar por Inplant' }),
+            Rede: new Choices('#filtroRede', { removeItemButton: true, placeholderValue: 'Filtrar por Rede' }),
+            Dia: new Choices('#filtroDia', { removeItemButton: true, placeholderValue: 'Dia da Semana' })
+        };
 
-    const filtros = {
-      CDD: new Choices('#filtroCDD', { removeItemButton: true, placeholderValue: 'Escolha o CDD' }),
-      GN: new Choices('#filtroGN', { removeItemButton: true, placeholderValue: 'Filtrar por GN' }),
-      Inplant: new Choices('#filtroInplant', { removeItemButton: true, placeholderValue: 'Filtrar por Inplant' }),
-      Rede: new Choices('#filtroRede', { removeItemButton: true, placeholderValue: 'Filtrar por Rede' }),
-      Dia: new Choices('#filtroDia', { removeItemButton: true, placeholderValue: 'Dia da Semana' })
-    };
+        const coresPorDia = {
+            'Agenda': 'green',
+            'Segunda': 'red',
+            'Terça': 'orange',
+            'Quarta': 'yellow',
+            'Quinta': 'purple',
+            'Sexta': 'black',
+            'Sábado': 'gray',
+            'Total': 'blue'
+        };
 
-    const coresPorDia = {
-      'Agenda': 'green', 'Segunda': 'red', 'Terça': 'orange', 'Quarta': 'yellow', 'Quinta': 'purple',
-      'Sexta': 'black', 'Sábado': 'gray', 'Total': 'blue'
-    };
-
-    function preencherFiltros(dados, chave, controle) {
-      const valores = [...new Set(dados.map(d => d[chave]).filter(Boolean))].sort();
-      controle.clearChoices();
-      controle.setChoices(valores.map(v => ({ value: v, label: v })), 'value', 'label', true);
-    }
-
-    function atualizarMapa(dados) {
-      grupoMarcadores.clearLayers();
-      if (heatLayer) map.removeLayer(heatLayer);
-      const pontosHeat = [];
-
-      const cdd = filtros.CDD.getValue(true);
-      const gn = filtros.GN.getValue(true);
-      const inplant = filtros.Inplant.getValue(true);
-      const rede = filtros.Rede.getValue(true);
-      const diasSelecionados = filtros.Dia.getValue(true);
-
-      dados.forEach(d => {
-        const lat = parseFloat(d['LAT']);
-        const lon = parseFloat(d['LONG']);
-        if (isNaN(lat) || isNaN(lon)) return;
-
-        const cddValido = cdd.length === 0 || cdd.includes(d['CDD']);
-        const gnValido = gn.length === 0 || gn.includes(d['GN']);
-        const inplantValido = inplant.length === 0 || inplant.includes(d['Inplant']);
-        const redeValido = rede.length === 0 || rede.includes(d['Rede']);
-
-        let diaValido = false;
-        let cor = 'blue';
-
-        if (diasSelecionados.length === 0) {
-          ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].forEach(dia => {
-            if (d[dia]?.trim() === '1' && !diaValido) {
-              cor = coresPorDia[dia];
-              diaValido = true;
-            }
-          });
-        } else {
-          for (let dia of diasSelecionados) {
-            if (d[dia]?.trim() === '1') {
-              cor = coresPorDia[dia];
-              diaValido = true;
-              break;
-            }
-          }
-          if (!diaValido && diasSelecionados.includes('Agenda')) {
-            diaValido = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
-            if (diaValido) cor = coresPorDia['Agenda'];
-          }
+        function preencherFiltros(dados, chave, controle) {
+            const valores = [...new Set(dados.map(d => d[chave]).filter(Boolean))].sort();
+            controle.clearChoices();
+            controle.setChoices(valores.map(v => ({ value: v, label: v })), 'value', 'label', true);
         }
 
-        if (cddValido && gnValido && inplantValido && redeValido && diaValido) {
-          const marker = L.circleMarker([lat, lon], {
-            radius: 6, color: cor, fillColor: cor, fillOpacity: 0.8, weight: 1
-          }).bindPopup(<b>${d['Nome']}</b><br>CDD: ${d['CDD']}<br>GN: ${d['GN']}<br>Inplant: ${d['Inplant']}<br>Rede: ${d['Rede']});
-          grupoMarcadores.addLayer(marker);
-          pontosHeat.push([lat, lon, 0.5]);
+        function atualizarMapa(dados) {
+            grupoMarcadores.clearLayers();
+            if (heatLayer) map.removeLayer(heatLayer);
+            let heatData = [];
+
+            const cdd = filtros.CDD.getValue(true);
+            const gn = filtros.GN.getValue(true);
+            const inplant = filtros.Inplant.getValue(true);
+            const rede = filtros.Rede.getValue(true);
+            const diasSelecionados = filtros.Dia.getValue(true);
+
+            dados.forEach(d => {
+                const lat = parseFloat(d['LAT']);
+                const lon = parseFloat(d['LONG']);
+                if (isNaN(lat) || isNaN(lon)) return;
+
+                const cddValido = cdd.length === 0 || cdd.includes(d['CDD']);
+                const gnValido = gn.length === 0 || gn.includes(d['GN']);
+                const inplantValido = inplant.length === 0 || inplant.includes(d['Inplant']);
+                const redeValido = rede.length === 0 || rede.includes(d['Rede']);
+
+                let diaValido = false;
+                let cor = 'blue';
+
+                if (diasSelecionados.length === 0) {
+                    const dias = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+                    for (let dia of dias) {
+                        if (d[dia]?.trim() === '1') {
+                            cor = coresPorDia[dia];
+                            diaValido = true;
+                            break;
+                        }
+                    }
+                } else {
+                    for (let dia of diasSelecionados) {
+                        if (d[dia]?.trim() === '1') {
+                            cor = coresPorDia[dia];
+                            diaValido = true;
+                            break;
+                        }
+                    }
+                    if (!diaValido && diasSelecionados.includes('Agenda')) {
+                        const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
+                        if (isAgenda) {
+                            diaValido = true;
+                            cor = coresPorDia['Agenda'];
+                        }
+                    }
+                }
+
+                if (cddValido && gnValido && inplantValido && redeValido && diaValido) {
+                    heatData.push([lat, lon, 1]);
+                    const marker = L.circleMarker([lat, lon], {
+                        radius: 6,
+                        color: cor,
+                        fillColor: cor,
+                        fillOpacity: 0.8,
+                        weight: 1
+                    }).bindPopup(`<b>${d['Nome']}</b><br>CDD: ${d['CDD']}<br>GN: ${d['GN']}<br>Inplant: ${d['Inplant']}<br>Rede: ${d['Rede']}`);
+                    grupoMarcadores.addLayer(marker);
+                }
+            });
+
+            heatLayer = L.heatLayer(heatData, {radius: 25, blur: 15, maxZoom: 10});
         }
-      });
 
-      if (document.body.classList.contains('heat-active')) {
-        heatLayer = L.heatLayer(pontosHeat, { radius: 25 }).addTo(map);
-      }
-    }
+        Papa.parse(url, {
+            download: true,
+            header: true,
+            complete: results => {
+                const dados = results.data;
 
-    document.getElementById('heatmapToggle').addEventListener('click', () => {
-      document.body.classList.toggle('heat-active');
-      atualizarMapa(dadosGlobal);
-    });
+                preencherFiltros(dados, 'CDD', filtros.CDD);
+                preencherFiltros(dados, 'GN', filtros.GN);
+                preencherFiltros(dados, 'Inplant', filtros.Inplant);
+                preencherFiltros(dados, 'Rede', filtros.Rede);
 
-    let dadosGlobal = [];
-    Papa.parse(url, {
-      download: true,
-      header: true,
-      complete: results => {
-        const dados = results.data;
-        dadosGlobal = dados;
-        preencherFiltros(dados, 'CDD', filtros.CDD);
-        preencherFiltros(dados, 'GN', filtros.GN);
-        preencherFiltros(dados, 'Inplant', filtros.Inplant);
-        preencherFiltros(dados, 'Rede', filtros.Rede);
-        const diasSemana = ['Agenda','Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-        filtros.Dia.clearChoices();
-        filtros.Dia.setChoices(diasSemana.map(d => ({ value: d, label: d })), 'value', 'label', true);
-        atualizarMapa(dados);
-        Object.values(filtros).forEach(f => {
-          f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
+                const diasSemana = ['Agenda','Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+                filtros.Dia.clearChoices();
+                filtros.Dia.setChoices(diasSemana.map(d => ({ value: d, label: d })), 'value', 'label', true);
+
+                atualizarMapa(dados);
+                Object.values(filtros).forEach(f => {
+                    f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
+                });
+
+                document.getElementById('botaoHeatmap').addEventListener('click', () => {
+                    if (map.hasLayer(heatLayer)) {
+                        map.removeLayer(heatLayer);
+                    } else {
+                        heatLayer.addTo(map);
+                    }
+                });
+            }
         });
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
