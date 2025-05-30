@@ -5,34 +5,30 @@
     <title>Mapa Interativo - Ambev</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.min.css" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
         #map { height: 90vh; width: 100%; }
         .filtros {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 1000;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.9);
             padding: 10px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
-        .filtros label { font-weight: bold; display: block; margin-top: 10px; }
-        .leaflet-control-zoom {
-            margin-top: 170px;
-        }
+        .filtros label { font-weight: bold; display: block; margin-top: 8px; }
+        .filtros select { width: 200px; margin-bottom: 5px; }
         #legenda {
             position: absolute;
             bottom: 10px;
             left: 10px;
-            background-color: white;
+            background-color: rgba(255,255,255,0.9);
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 13px;
         }
     </style>
@@ -57,24 +53,27 @@
         <b>Legenda:</b><br>
         Total: Azul<br>
         Agenda: Verde<br>
-        Dia de Rota: Laranja
+        Segunda: Red<br>
+        Terça: Orange<br>
+        Quarta: Yellow<br>
+        Quinta: Purple<br>
+        Sexta: Black<br>
+        Sábado: Gray
     </div>
 
     <script>
         const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
-
         const map = L.map('map').setView([-15.7797, -47.9297], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
         const grupoMarcadores = L.layerGroup().addTo(map);
 
         const filtros = {
-            CDD: new Choices('#filtroCDD', { removeItemButton: true }),
-            Dia: new Choices('#filtroDia', { removeItemButton: true }),
-            'Tipo de Camada': new Choices('#filtroCamada', { removeItemButton: true }),
-            Inplant: new Choices('#filtroInplant', { removeItemButton: true }),
-            GN: new Choices('#filtroGN', { removeItemButton: true }),
-            Rede: new Choices('#filtroRede', { removeItemButton: true })
+            CDD: document.getElementById('filtroCDD'),
+            Dia: document.getElementById('filtroDia'),
+            Camada: document.getElementById('filtroCamada'),
+            Inplant: document.getElementById('filtroInplant'),
+            GN: document.getElementById('filtroGN'),
+            Rede: document.getElementById('filtroRede')
         };
 
         const coresPorDia = {
@@ -88,51 +87,60 @@
             'Total': 'blue'
         };
 
-        function preencherFiltros(dados, chave, controle) {
-            const valoresUnicos = [...new Set(dados.map(d => d[chave]).filter(Boolean))].sort();
-            controle.clearChoices();
-            controle.setChoices(valoresUnicos.map(v => ({ value: v, label: v })), 'value', 'label', true);
+        function preencherFiltros(dados, chave, select) {
+            const valores = [...new Set(dados.map(d => d[chave]).filter(Boolean))].sort();
+            select.innerHTML = '';
+            valores.forEach(valor => {
+                const opt = document.createElement('option');
+                opt.value = valor;
+                opt.textContent = valor;
+                select.appendChild(opt);
+            });
+        }
+
+        function getValoresSelecionados(select) {
+            return Array.from(select.selectedOptions).map(opt => opt.value);
         }
 
         function atualizarMapa(dados) {
             grupoMarcadores.clearLayers();
 
-            const cdd = filtros.CDD.getValue(true);
-            const diasSelecionados = filtros.Dia.getValue(true);
-            const camada = filtros['Tipo de Camada'].getValue(true);
-            const inplant = filtros.Inplant.getValue(true);
-            const gn = filtros.GN.getValue(true);
-            const rede = filtros.Rede.getValue(true);
+            const cddSel = getValoresSelecionados(filtros.CDD);
+            const diaSel = getValoresSelecionados(filtros.Dia);
+            const camadaSel = getValoresSelecionados(filtros.Camada);
+            const inplantSel = getValoresSelecionados(filtros.Inplant);
+            const gnSel = getValoresSelecionados(filtros.GN);
+            const redeSel = getValoresSelecionados(filtros.Rede);
 
             dados.forEach(d => {
-                let diaValido = diasSelecionados.length === 0 || diasSelecionados.some(ds => d[ds]?.trim() === '1');
-                const cddValido = cdd.length === 0 || cdd.includes(d['CDD']);
-                const camadaValida = camada.length === 0 || camada.includes(d['Tipo de Camada']);
-                const inplantValido = inplant.length === 0 || inplant.includes(d['Inplant']);
-                const gnValido = gn.length === 0 || gn.includes(d['GN']);
-                const redeValida = rede.length === 0 || rede.includes(d['Rede']);
+                const agenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(ds => d[ds]?.trim() === '1');
+
+                const diaValido = diaSel.length === 0 || diaSel.some(ds =>
+                    (ds === 'Agenda' && agenda) || d[ds]?.trim() === '1');
+                const cddValido = cddSel.length === 0 || cddSel.includes(d['CDD']);
+                const camadaValida = camadaSel.length === 0 || camadaSel.includes(d['Tipo de Camada']);
+                const inplantValido = inplantSel.length === 0 || inplantSel.includes(d['Inplant']);
+                const gnValido = gnSel.length === 0 || gnSel.includes(d['GN']);
+                const redeValida = redeSel.length === 0 || redeSel.includes(d['Rede']);
 
                 if (diaValido && cddValido && camadaValida && inplantValido && gnValido && redeValida) {
                     const lat = parseFloat(d.LAT);
-                    const lon = parseFloat(d.LONG);
-
-                    if (!isNaN(lat) && !isNaN(lon)) {
+                    const lng = parseFloat(d.LONG);
+                    if (!isNaN(lat) && !isNaN(lng)) {
                         let cor = 'blue';
-                        for (let dia of diasSelecionados) {
-                            if (d[dia]?.trim() === '1' && coresPorDia[dia]) {
+                        for (let dia of diaSel) {
+                            if ((dia === 'Agenda' && agenda) || d[dia]?.trim() === '1') {
                                 cor = coresPorDia[dia];
                                 break;
                             }
                         }
-
-                        const marcador = L.circleMarker([lat, lon], {
+                        const marcador = L.circleMarker([lat, lng], {
                             radius: 6,
                             color: cor,
                             fillColor: cor,
                             fillOpacity: 0.8,
                             weight: 2
                         }).bindPopup(`<b>${d['Nome']}</b><br>Inplant: ${d['Inplant']}<br>CDD: ${d['CDD']}`);
-
                         grupoMarcadores.addLayer(marcador);
                     }
                 }
@@ -144,22 +152,24 @@
             header: true,
             complete: results => {
                 const dados = results.data;
-
                 preencherFiltros(dados, 'CDD', filtros.CDD);
-                preencherFiltros(dados, 'Tipo de Camada', filtros['Tipo de Camada']);
+                preencherFiltros(dados, 'Tipo de Camada', filtros.Camada);
                 preencherFiltros(dados, 'Inplant', filtros.Inplant);
                 preencherFiltros(dados, 'GN', filtros.GN);
                 preencherFiltros(dados, 'Rede', filtros.Rede);
 
-                // Dias fixos
-                const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-                filtros.Dia.clearChoices();
-                filtros.Dia.setChoices(diasSemana.map(v => ({ value: v, label: v })), 'value', 'label', true);
+                const diasFixos = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Agenda'];
+                filtros.Dia.innerHTML = '';
+                diasFixos.forEach(dia => {
+                    const opt = document.createElement('option');
+                    opt.value = dia;
+                    opt.textContent = dia;
+                    filtros.Dia.appendChild(opt);
+                });
 
                 atualizarMapa(dados);
-
-                Object.values(filtros).forEach(f => {
-                    f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
+                Object.values(filtros).forEach(filtro => {
+                    filtro.addEventListener('change', () => atualizarMapa(dados));
                 });
             }
         });
