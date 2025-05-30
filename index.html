@@ -5,6 +5,7 @@
     <title>Mapa Interativo - Ambev</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.min.css" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -16,20 +17,32 @@
             top: 10px;
             left: 10px;
             z-index: 1000;
-            background-color: white;
-            padding: 10px;
+            padding: 5px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-size: 12px;
         }
-        .filtros label { font-weight: bold; display: block; margin-top: 10px; }
+        .filtros label {
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+            margin-bottom: 2px;
+        }
+        select {
+            width: 160px;
+            font-size: 12px;
+            background: transparent;
+        }
+        .leaflet-control-zoom {
+            margin-top: 170px;
+        }
         #legenda {
             position: absolute;
             bottom: 10px;
             left: 10px;
             background-color: white;
-            padding: 10px;
+            padding: 8px;
             border-radius: 10px;
-            font-size: 13px;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -51,124 +64,15 @@
     <div id="map"></div>
     <div id="legenda">
         <b>Legenda:</b><br>
+        Total: Azul<br>
         Agenda: Verde<br>
+        Dia de Rota: Laranja<br>
         Segunda: Red<br>
         Terça: Orange<br>
         Quarta: Yellow<br>
         Quinta: Purple<br>
         Sexta: Black<br>
-        Sábado: Gray<br>
+        Sábado: Gray
     </div>
-    <script>
-        const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
-
-        const map = L.map('map').setView([-15.7797, -47.9297], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        const grupoMarcadores = L.layerGroup().addTo(map);
-
-        const filtros = {
-            CDD: new Choices('#filtroCDD', { removeItemButton: true }),
-            Dia: new Choices('#filtroDia', { removeItemButton: true }),
-            'Tipo de Camada': new Choices('#filtroCamada', { removeItemButton: true }),
-            Inplant: new Choices('#filtroInplant', { removeItemButton: true }),
-            GN: new Choices('#filtroGN', { removeItemButton: true }),
-            Rede: new Choices('#filtroRede', { removeItemButton: true })
-        };
-
-        const coresPorDia = {
-            'Agenda': 'green',
-            'Segunda': 'red',
-            'Terça': 'orange',
-            'Quarta': 'yellow',
-            'Quinta': 'purple',
-            'Sexta': 'black',
-            'Sábado': 'gray'
-        };
-
-        function preencherFiltros(dados, chave, controle) {
-            const valoresUnicos = [...new Set(dados.map(d => d[chave]).filter(Boolean))].sort();
-            controle.clearChoices();
-            controle.setChoices(valoresUnicos.map(v => ({ value: v, label: v })), 'value', 'label', true);
-        }
-
-        function atualizarMapa(dados) {
-            grupoMarcadores.clearLayers();
-            const cdd = filtros.CDD.getValue(true);
-            const diasSelecionados = filtros.Dia.getValue(true);
-            const camada = filtros['Tipo de Camada'].getValue(true);
-            const inplant = filtros.Inplant.getValue(true);
-            const gn = filtros.GN.getValue(true);
-            const rede = filtros.Rede.getValue(true);
-
-            dados.forEach(d => {
-                const cddValido = cdd.length === 0 || cdd.includes(d['CDD']);
-                const camadaValida = camada.length === 0 || camada.includes(d['Tipo de Camada']);
-                const inplantValido = inplant.length === 0 || inplant.includes(d['Inplant']);
-                const gnValido = gn.length === 0 || gn.includes(d['GN']);
-                const redeValida = rede.length === 0 || rede.includes(d['Rede']);
-
-                const lat = parseFloat(d.LAT);
-                const lon = parseFloat(d.LONG);
-                if (cddValido && camadaValida && inplantValido && gnValido && redeValida && !isNaN(lat) && !isNaN(lon)) {
-                    const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-                    if (diasSelecionados.length === 0) {
-                        diasSemana.forEach(dia => {
-                            if (d[dia]?.trim() === '1') {
-                                const cor = coresPorDia[dia] || 'gray';
-                                const marcador = L.circleMarker([lat, lon], {
-                                    radius: 6, color: cor, fillColor: cor, fillOpacity: 0.8, weight: 2
-                                }).bindPopup(`<b>${d['Nome']}</b><br>Dia: ${dia}<br>CDD: ${d['CDD']}`);
-                                grupoMarcadores.addLayer(marcador);
-                            }
-                        });
-                        if (diasSemana.every(dia => d[dia]?.trim() === '1')) {
-                            const cor = coresPorDia['Agenda'];
-                            const marcador = L.circleMarker([lat, lon], {
-                                radius: 6, color: cor, fillColor: cor, fillOpacity: 0.8, weight: 2
-                            }).bindPopup(`<b>${d['Nome']}</b><br>Dia: Agenda<br>CDD: ${d['CDD']}`);
-                            grupoMarcadores.addLayer(marcador);
-                        }
-                    } else {
-                        diasSelecionados.forEach(dia => {
-                            if (dia === 'Agenda' && diasSemana.every(ds => d[ds]?.trim() === '1')) {
-                                const cor = coresPorDia['Agenda'];
-                                const marcador = L.circleMarker([lat, lon], {
-                                    radius: 6, color: cor, fillColor: cor, fillOpacity: 0.8, weight: 2
-                                }).bindPopup(`<b>${d['Nome']}</b><br>Dia: Agenda<br>CDD: ${d['CDD']}`);
-                                grupoMarcadores.addLayer(marcador);
-                            } else if (d[dia]?.trim() === '1') {
-                                const cor = coresPorDia[dia] || 'gray';
-                                const marcador = L.circleMarker([lat, lon], {
-                                    radius: 6, color: cor, fillColor: cor, fillOpacity: 0.8, weight: 2
-                                }).bindPopup(`<b>${d['Nome']}</b><br>Dia: ${dia}<br>CDD: ${d['CDD']}`);
-                                grupoMarcadores.addLayer(marcador);
-                            }
-                        });
-                    }
-                }
-            });
-        }
-
-        Papa.parse(url, {
-            download: true,
-            header: true,
-            complete: results => {
-                const dados = results.data;
-                preencherFiltros(dados, 'CDD', filtros.CDD);
-                preencherFiltros(dados, 'Tipo de Camada', filtros['Tipo de Camada']);
-                preencherFiltros(dados, 'Inplant', filtros.Inplant);
-                preencherFiltros(dados, 'GN', filtros.GN);
-                preencherFiltros(dados, 'Rede', filtros.Rede);
-                const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Agenda'];
-                filtros.Dia.clearChoices();
-                filtros.Dia.setChoices(diasSemana.map(v => ({ value: v, label: v })), 'value', 'label', true);
-                atualizarMapa(dados);
-                Object.values(filtros).forEach(f => {
-                    f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
-                });
-            }
-        });
-    </script>
 </body>
 </html>
