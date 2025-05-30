@@ -1,193 +1,142 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Interativo Ambev</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <title>Mapa Interativo com Filtros</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/selectize/dist/css/selectize.bootstrap3.css" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        #map {
-            height: 100vh;
-            width: 100%;
-        }
-
+        #map { height: 100vh; width: 100vw; }
         .filters {
             position: absolute;
             top: 10px;
             left: 10px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.8);
             padding: 10px;
-            border-radius: 8px;
+            z-index: 1000;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         }
-
         .legend {
             position: absolute;
             bottom: 10px;
             left: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
+            background: white;
             padding: 10px;
-            border-radius: 8px;
+            font-size: 12px;
+            border-radius: 10px;
         }
-
-        select {
-            padding: 5px;
-            border-radius: 4px;
+        .legend span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
         }
     </style>
 </head>
-
 <body>
     <div class="filters">
-        <label for="cddFilter">Escolha o CDD:</label>
-        <select id="cddFilter" multiple></select>
-
-        <label for="camadaFilter">Tipo de Camada:</label>
-        <select id="camadaFilter" multiple>
-            <option value="Total">Total</option>
-            <option value="Segunda">Segunda</option>
-            <option value="Terça">Terça</option>
-            <option value="Quarta">Quarta</option>
-            <option value="Quinta">Quinta</option>
-            <option value="Sexta">Sexta</option>
-            <option value="Sábado">Sábado</option>
-            <option value="Agenda">Agenda</option>
-        </select>
-
-        <label for="inplantFilter">Filtrar por Inplant:</label>
-        <select id="inplantFilter" multiple></select>
-
-        <label for="gnFilter">Filtrar por GN:</label>
-        <select id="gnFilter" multiple></select>
-
-        <label for="redeFilter">Filtrar por Rede:</label>
-        <select id="redeFilter" multiple></select>
+        <select id="cddFilter" placeholder="Escolha o CDD" multiple></select>
+        <select id="dayFilter" placeholder="Tipo de Camada" multiple></select>
+        <select id="inplantFilter" placeholder="Filtrar por Inplant" multiple></select>
+        <select id="gnFilter" placeholder="Filtrar por GN" multiple></select>
+        <select id="redeFilter" placeholder="Filtrar por Rede" multiple></select>
     </div>
-
+    <div id="map"></div>
     <div class="legend">
         <strong>Legenda:</strong><br>
-        <span style="color:red;">●</span> Segunda<br>
-        <span style="color:orange;">●</span> Terça<br>
-        <span style="color:yellow;">●</span> Quarta<br>
-        <span style="color:green;">●</span> Quinta<br>
-        <span style="color:blue;">●</span> Sexta<br>
-        <span style="color:purple;">●</span> Sábado<br>
-        <span style="color:gray;">●</span> Agenda
+        <span style="background:red;"></span> Segunda<br>
+        <span style="background:orange;"></span> Terça<br>
+        <span style="background:yellow;"></span> Quarta<br>
+        <span style="background:green;"></span> Quinta<br>
+        <span style="background:blue;"></span> Sexta<br>
+        <span style="background:purple;"></span> Sábado<br>
+        <span style="background:gray;"></span> Agenda
     </div>
 
-    <div id="map"></div>
-
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.1/papaparse.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/selectize"></script>
     <script>
-        const map = L.map('map').setView([-15.7797, -47.9297], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(map);
+        const map = L.map('map').setView([-15.78, -47.93], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        let allMarkers = [];
+        const layerGroup = L.layerGroup().addTo(map);
 
-        fetch('https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv')
-            .then(response => response.text())
-            .then(data => {
-                const rows = data.split('\n');
-                const headers = rows[0].split(',');
-                const content = rows.slice(1).map(r => r.split(','));
+        const colorMap = {
+            'Segunda': 'red',
+            'Terça': 'orange',
+            'Quarta': 'yellow',
+            'Quinta': 'green',
+            'Sexta': 'blue',
+            'Sábado': 'purple',
+            'Agenda': 'gray'
+        };
 
-                const cddSet = new Set();
-                const inplantSet = new Set();
-                const gnSet = new Set();
-                const redeSet = new Set();
+        const filters = {
+            cdd: [],
+            day: [],
+            inplant: [],
+            gn: [],
+            rede: []
+        };
 
-                content.forEach(row => {
-                    const lat = parseFloat(row[headers.indexOf('Latitude')]);
-                    const lon = parseFloat(row[headers.indexOf('Longitude')]);
-                    const dia = row[headers.indexOf('Dia Semana')];
-                    const agenda = row[headers.indexOf('Agenda')];
-                    const cdd = row[headers.indexOf('CDD')];
-                    const inplant = row[headers.indexOf('Inplant')];
-                    const gn = row[headers.indexOf('GN')];
-                    const rede = row[headers.indexOf('Rede')];
-
-                    cddSet.add(cdd);
-                    inplantSet.add(inplant);
-                    gnSet.add(gn);
-                    redeSet.add(rede);
-
-                    const colorMap = {
-                        'Segunda': 'red', 'Terça': 'orange', 'Quarta': 'yellow', 'Quinta': 'green', 'Sexta': 'blue', 'Sábado': 'purple', 'Agenda': 'gray'
-                    };
-                    const color = agenda === 'Sim' ? 'gray' : colorMap[dia] || 'black';
-
-                    const marker = L.circleMarker([lat, lon], {
-                        radius: 6,
-                        fillColor: color,
-                        color: '#000',
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).bindPopup(`<strong>CDD:</strong> ${cdd}<br><strong>Dia:</strong> ${dia}<br><strong>Inplant:</strong> ${inplant}<br><strong>GN:</strong> ${gn}<br><strong>Rede:</strong> ${rede}`);
-
-                    marker.options.data = { dia, agenda, cdd, inplant, gn, rede };
-                    allMarkers.push(marker);
-                });
-
-                function populateSelect(selectId, options) {
-                    const select = document.getElementById(selectId);
-                    [...options].sort().forEach(value => {
-                        const option = document.createElement('option');
-                        option.value = value;
-                        option.text = value;
-                        select.appendChild(option);
-                    });
+        function updateMap(data) {
+            layerGroup.clearLayers();
+            data.forEach(row => {
+                if (
+                    (filters.cdd.length === 0 || filters.cdd.includes(row.CDD)) &&
+                    (filters.day.length === 0 || filters.day.includes(row.Dia)) &&
+                    (filters.inplant.length === 0 || filters.inplant.includes(row.Inplant)) &&
+                    (filters.gn.length === 0 || filters.gn.includes(row.GN)) &&
+                    (filters.rede.length === 0 || filters.rede.includes(row.Rede))
+                ) {
+                    const marker = L.circleMarker([+row.Latitude, +row.Longitude], {
+                        color: colorMap[row.Dia] || 'black',
+                        radius: 6
+                    }).bindPopup(`<strong>${row.Loja}</strong><br>${row.Rede}<br>${row.CDD}<br>${row.Inplant}<br>${row.GN}<br>${row.Dia}`);
+                    layerGroup.addLayer(marker);
                 }
-
-                populateSelect('cddFilter', cddSet);
-                populateSelect('inplantFilter', inplantSet);
-                populateSelect('gnFilter', gnSet);
-                populateSelect('redeFilter', redeSet);
-
-                function filterMarkers() {
-                    const selectedCDDs = Array.from(document.getElementById('cddFilter').selectedOptions).map(o => o.value);
-                    const selectedCamadas = Array.from(document.getElementById('camadaFilter').selectedOptions).map(o => o.value);
-                    const selectedInplants = Array.from(document.getElementById('inplantFilter').selectedOptions).map(o => o.value);
-                    const selectedGNs = Array.from(document.getElementById('gnFilter').selectedOptions).map(o => o.value);
-                    const selectedRedes = Array.from(document.getElementById('redeFilter').selectedOptions).map(o => o.value);
-
-                    allMarkers.forEach(marker => {
-                        const d = marker.options.data;
-                        const visible =
-                            (selectedCDDs.length === 0 || selectedCDDs.includes(d.cdd)) &&
-                            (selectedCamadas.length === 0 ||
-                                (selectedCamadas.includes('Agenda') && d.agenda === 'Sim') ||
-                                (selectedCamadas.includes(d.dia) && d.agenda !== 'Sim')) &&
-                            (selectedInplants.length === 0 || selectedInplants.includes(d.inplant)) &&
-                            (selectedGNs.length === 0 || selectedGNs.includes(d.gn)) &&
-                            (selectedRedes.length === 0 || selectedRedes.includes(d.rede));
-
-                        if (visible) {
-                            marker.addTo(map);
-                        } else {
-                            map.removeLayer(marker);
-                        }
-                    });
-                }
-
-                document.querySelectorAll('select').forEach(s => s.addEventListener('change', filterMarkers));
-
-                allMarkers.forEach(marker => marker.addTo(map));
             });
+        }
+
+        function populateFilters(data) {
+            const cdds = [...new Set(data.map(r => r.CDD))];
+            const days = [...new Set(data.map(r => r.Dia))];
+            const inplants = [...new Set(data.map(r => r.Inplant))];
+            const gns = [...new Set(data.map(r => r.GN))];
+            const redes = [...new Set(data.map(r => r.Rede))];
+
+            function initSelect(id, values, key) {
+                const select = $(id);
+                values.forEach(val => select.append(new Option(val, val)));
+                select.selectize({
+                    plugins: ['remove_button'],
+                    onChange: val => {
+                        filters[key] = val;
+                        updateMap(window.csvData);
+                    }
+                });
+            }
+
+            initSelect('#cddFilter', cdds, 'cdd');
+            initSelect('#dayFilter', days, 'day');
+            initSelect('#inplantFilter', inplants, 'inplant');
+            initSelect('#gnFilter', gns, 'gn');
+            initSelect('#redeFilter', redes, 'rede');
+        }
+
+        Papa.parse('https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv', {
+            download: true,
+            header: true,
+            complete: results => {
+                window.csvData = results.data;
+                populateFilters(results.data);
+                updateMap(results.data);
+            }
+        });
     </script>
 </body>
-
 </html>
