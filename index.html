@@ -2,165 +2,157 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Mapa Interativo Ambev</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-  />
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <title>Mapa Interativo com Filtros</title>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
     #map {
       height: 100vh;
       width: 100%;
     }
-    .control-panel {
+    .filter-container {
       position: absolute;
       top: 10px;
       left: 10px;
+      z-index: 1000;
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
-      z-index: 1000;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px;
+      border-radius: 8px;
     }
-    .control-panel select {
-      padding: 5px;
-      border-radius: 4px;
+    .filter-container select {
+      width: 150px;
     }
     .legend {
-      position: absolute;
+      position: fixed;
       bottom: 10px;
       left: 10px;
-      background: white;
-      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 6px;
       font-size: 14px;
-      border-radius: 5px;
     }
     .legend span {
-      margin-right: 10px;
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+      border-radius: 50%;
     }
   </style>
 </head>
 <body>
-  <div id="map"></div>
-  <div class="control-panel">
-    <select id="cddFilter" multiple></select>
-    <select id="dayFilter" multiple>
-      <option value="Segunda">Segunda</option>
-      <option value="Terça">Terça</option>
-      <option value="Quarta">Quarta</option>
-      <option value="Quinta">Quinta</option>
-      <option value="Sexta">Sexta</option>
-      <option value="Sábado">Sábado</option>
-      <option value="Agenda">Agenda</option>
-    </select>
-    <select id="inplantFilter" multiple></select>
-    <select id="gnFilter" multiple></select>
+  <div class="filter-container">
+    <select id="cddSelect" multiple></select>
+    <select id="diaSelect" multiple></select>
+    <select id="inplantSelect" multiple></select>
+    <select id="gnSelect" multiple></select>
   </div>
-
+  <div id="map"></div>
   <div class="legend">
     <strong>Legenda:</strong>
-    <span style="color: red;">● Agenda</span>
-    <span style="color: blue;">● Segunda</span>
-    <span style="color: green;">● Terça</span>
-    <span style="color: purple;">● Quarta</span>
-    <span style="color: brown;">● Quinta</span>
-    <span style="color: black;">● Sexta</span>
-    <span style="color: orange;">● Sábado</span>
+    <div><span style="background:red;"></span>Agenda</div>
+    <div><span style="background:blue;"></span>Segunda</div>
+    <div><span style="background:green;"></span>Terça</div>
+    <div><span style="background:purple;"></span>Quarta</div>
+    <div><span style="background:brown;"></span>Quinta</div>
+    <div><span style="background:black;"></span>Sexta</div>
+    <div><span style="background:orange;"></span>Sábado</div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.1/papaparse.min.js"></script>
+
   <script>
-    const map = L.map("map").setView([-10.5, -52], 4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
+    const map = L.map('map').setView([-10.5, -53.2], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const layerGroup = L.layerGroup().addTo(map);
-    const colors = {
-      "Agenda": "red",
-      "Segunda": "blue",
-      "Terça": "green",
-      "Quarta": "purple",
-      "Quinta": "brown",
-      "Sexta": "black",
-      "Sábado": "orange"
-    };
+    const cddSelect = $('#cddSelect').select2({ placeholder: "Escolha o CDD" });
+    const diaSelect = $('#diaSelect').select2({ placeholder: "Dia da Semana" });
+    const inplantSelect = $('#inplantSelect').select2({ placeholder: "Filtrar por Inplant" });
+    const gnSelect = $('#gnSelect').select2({ placeholder: "Filtrar por GN" });
 
-    function loadData() {
-      Papa.parse("https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20ASCD%20CO.csv", {
-        download: true,
-        header: true,
-        complete: function (results) {
-          const data = results.data;
-          populateFilters(data);
-          updateMap(data);
-          document.querySelectorAll(".control-panel select").forEach(sel => {
-            sel.addEventListener("change", () => updateMap(data));
-          });
-        },
-      });
+    let allMarkers = [];
+
+    function clearMarkers() {
+      allMarkers.forEach(marker => map.removeLayer(marker));
+      allMarkers = [];
     }
 
-    function populateFilters(data) {
-      const cddSet = new Set();
-      const inplantSet = new Set();
-      const gnSet = new Set();
-      data.forEach(row => {
-        if (row.CDD) cddSet.add(row.CDD.trim());
-        if (row.Inplant) inplantSet.add(row.Inplant.trim());
-        if (row.GN) gnSet.add(row.GN.trim());
-      });
+    function renderMarkers(data) {
+      clearMarkers();
 
-      const cddFilter = document.getElementById("cddFilter");
-      const inplantFilter = document.getElementById("inplantFilter");
-      const gnFilter = document.getElementById("gnFilter");
-
-      cddSet.forEach(val => cddFilter.add(new Option(val, val)));
-      inplantSet.forEach(val => inplantFilter.add(new Option(val, val)));
-      gnSet.forEach(val => gnFilter.add(new Option(val, val)));
-    }
-
-    function updateMap(data) {
-      layerGroup.clearLayers();
-      const selectedCDDs = getSelectedValues("cddFilter");
-      const selectedDays = getSelectedValues("dayFilter");
-      const selectedInplants = getSelectedValues("inplantFilter");
-      const selectedGNs = getSelectedValues("gnFilter");
+      const selectedCDDs = cddSelect.val();
+      const selectedDias = diaSelect.val();
+      const selectedInplants = inplantSelect.val();
+      const selectedGNs = gnSelect.val();
 
       data.forEach(row => {
-        const lat = parseFloat(row.Lat);
-        const lon = parseFloat(row.Lng);
-        const dia = row["Dia de Rota"];
-        const cdd = row["CDD"];
-        const inplant = row["Inplant"];
-        const gn = row["GN"];
-
-        const diaValid = selectedDays.length === 0 || selectedDays.includes(dia);
-        const cddValid = selectedCDDs.length === 0 || selectedCDDs.includes(cdd);
-        const inplantValid = selectedInplants.length === 0 || selectedInplants.includes(inplant);
-        const gnValid = selectedGNs.length === 0 || selectedGNs.includes(gn);
-
-        if (lat && lon && diaValid && cddValid && inplantValid && gnValid) {
-          const color = colors[dia] || "gray";
-          const marker = L.circleMarker([lat, lon], {
+        if (
+          (!selectedCDDs.length || selectedCDDs.includes(row.CDD)) &&
+          (!selectedDias.length || selectedDias.includes(row.Dia)) &&
+          (!selectedInplants.length || selectedInplants.includes(row.Inplant)) &&
+          (!selectedGNs.length || selectedGNs.includes(row.GN))
+        ) {
+          const colorMap = {
+            'Agenda': 'red',
+            'Segunda': 'blue',
+            'Terça': 'green',
+            'Quarta': 'purple',
+            'Quinta': 'brown',
+            'Sexta': 'black',
+            'Sábado': 'orange'
+          };
+          const marker = L.circleMarker([+row.Latitude, +row.Longitude], {
             radius: 8,
-            color: color,
-            fillOpacity: 0.8,
-          });
-          marker.bindPopup(`<strong>Loja:</strong> ${row.Loja}<br><strong>CDD:</strong> ${cdd}<br><strong>Dia:</strong> ${dia}`);
-          layerGroup.addLayer(marker);
+            fillColor: colorMap[row.Dia],
+            color: '#000',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          }).addTo(map).bindPopup(<strong>${row.Loja}</strong><br>${row.Inplant});
+          allMarkers.push(marker);
         }
       });
     }
 
-    function getSelectedValues(selectId) {
-      const sel = document.getElementById(selectId);
-      return Array.from(sel.selectedOptions).map(o => o.value);
-    }
+    Papa.parse("https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20ASCD%20CO.csv", {
+      download: true,
+      header: true,
+      complete: function(results) {
+        const data = results.data;
 
-    loadData();
+        const uniqueCDDs = [...new Set(data.map(row => row.CDD).filter(Boolean))];
+        const uniqueDias = [...new Set(data.map(row => row.Dia).filter(Boolean))];
+        const uniqueInplants = [...new Set(data.map(row => row.Inplant).filter(Boolean))];
+        const uniqueGNs = [...new Set(data.map(row => row.GN).filter(Boolean))];
+
+        uniqueCDDs.forEach(cdd => cddSelect.append(new Option(cdd, cdd)));
+        uniqueDias.forEach(dia => diaSelect.append(new Option(dia, dia)));
+        uniqueInplants.forEach(inplant => inplantSelect.append(new Option(inplant, inplant)));
+        uniqueGNs.forEach(gn => gnSelect.append(new Option(gn, gn)));
+
+        // Evento de filtragem
+        cddSelect.on('change', () => renderMarkers(data));
+        diaSelect.on('change', () => renderMarkers(data));
+        inplantSelect.on('change', () => renderMarkers(data));
+        gnSelect.on('change', () => renderMarkers(data));
+
+        renderMarkers(data);
+      }
+    });
   </script>
 </body>
 </html>
