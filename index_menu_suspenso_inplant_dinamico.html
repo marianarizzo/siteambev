@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mapa Interativo - Ambev</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #map { height: 100vh; width: 100vw; }
+    .menu-suspenso {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    .menu-suspenso label { display: block; margin-top: 5px; }
+    .menu-suspenso select { width: 180px; }
+  </style>
+</head>
+<body>
+  <div class="menu-suspenso">
+    <label for="selectCDD">Selecionar CDD:</label>
+    <select id="selectCDD" onchange="filtrarCamadas()">
+      <option value="">Todos</option>
+    </select>
+
+    <label for="selectCamada">Selecionar Camada:</label>
+    <select id="selectCamada" onchange="filtrarCamadas()">
+      <option value="">Todas</option>
+      <option value="total">Total</option>
+      <option value="segunda">Segunda</option>
+      <option value="terça">Terça</option>
+      <option value="quarta">Quarta</option>
+      <option value="quinta">Quinta</option>
+      <option value="sexta">Sexta</option>
+      <option value="sábado">Sábado</option>
+      <option value="agenda">Agenda</option>
+    </select>
+
+    <label for="selectInplant">Selecionar Inplant:</label>
+    <select id="selectInplant" onchange="filtrarCamadas()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <script>
+    var map = L.map('map').setView([-15.78, -47.93], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    function filtrarCamadas() {
+      const cdd = document.getElementById("selectCDD").value.toLowerCase();
+      const camada = document.getElementById("selectCamada").value.toLowerCase();
+      const inplant = document.getElementById("selectInplant").value.toLowerCase();
+
+      document.querySelectorAll('.leaflet-control-layers-overlays input').forEach(input => {
+        const label = input.nextSibling.textContent.toLowerCase();
+        const matchCDD = !cdd || label.includes(cdd);
+        const matchCamada = !camada || label.includes(camada);
+        const matchInplant = !inplant || label.includes(inplant);
+
+        const shouldShow = matchCDD && matchCamada && matchInplant;
+        if (input.checked !== shouldShow) {
+          input.checked = shouldShow;
+          input.dispatchEvent(new Event('click'));
+        }
+      });
+    }
+
+    async function carregarSelectsDinamicos() {
+      const url = "https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20ASCD%20CO.csv";
+      try {
+        const resposta = await fetch(url);
+        const texto = await resposta.text();
+        const linhas = texto.split("\n");
+        const cabecalhos = linhas[0].split(",");
+        const indiceCDD = cabecalhos.indexOf("CDD");
+        const indiceInplant = cabecalhos.indexOf("Inplant");
+
+        const setCDDs = new Set();
+        const setInplants = new Set();
+
+        for (let i = 1; i < linhas.length; i++) {
+          const colunas = linhas[i].split(",");
+          const cdd = colunas[indiceCDD]?.trim();
+          const inplant = colunas[indiceInplant]?.trim();
+          if (cdd) setCDDs.add(cdd);
+          if (inplant) setInplants.add(inplant);
+        }
+
+        const selectCDD = document.getElementById("selectCDD");
+        setCDDs.forEach(cdd => {
+          const option = document.createElement("option");
+          option.value = cdd;
+          option.text = cdd;
+          selectCDD.appendChild(option);
+        });
+
+        const selectInplant = document.getElementById("selectInplant");
+        setInplants.forEach(ip => {
+          const option = document.createElement("option");
+          option.value = ip;
+          option.text = ip;
+          selectInplant.appendChild(option);
+        });
+
+      } catch (erro) {
+        console.error("Erro ao carregar os dados:", erro);
+      }
+    }
+
+    carregarSelectsDinamicos();
+  </script>
+</body>
+</html>
