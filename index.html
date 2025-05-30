@@ -205,7 +205,16 @@
         preencherFiltros(dados, 'GN', filtros.GN);
         preencherFiltros(dados, 'Inplant', filtros.Inplant);
         preencherFiltros(dados, 'Rede', filtros.Rede);
-        preencherFiltros(dados, 'Dia', filtros.Dia);
+        filtros.Dia.clearChoices();
+filtros.Dia.setChoices([
+  { value: 'Agenda', label: 'Agenda' },
+  { value: 'Segunda', label: 'Segunda' },
+  { value: 'Terça', label: 'Terça' },
+  { value: 'Quarta', label: 'Quarta' },
+  { value: 'Quinta', label: 'Quinta' },
+  { value: 'Sexta', label: 'Sexta' },
+  { value: 'Sábado', label: 'Sábado' }
+], 'value', 'label', true);
 
         atualizarMapa(dados);
         Object.values(filtros).forEach(f => {
