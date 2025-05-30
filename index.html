@@ -105,18 +105,20 @@
      </div>
     <button id="botaoHeatmap">Ativar Heatmap</button>
     <div id="map"></div>
+</script>
 <div id="legenda-core" style="position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); background: white; padding: 8px 16px; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.2); font-size: 13px; z-index: 1000;">
 <b>Legenda:</b>
-        <span style="color: green;"><b>•</b> Agenda</span>
-        <span style="color: red;"><b>•</b> Segunda</span>
-        <span style="color: orange;"><b>•</b> Terça</span>
-        <span style="color: yellow;"><b>•</b> Quarta</span>
-        <span style="color: purple;"><b>•</b> Quinta</span>
-        <span style="color: black;"><b>•</b> Sexta</span>
-        <span style="color: gray;"><b>•</b> Sábado</span>
-        <span style="color: orangered;"><b>🔥</b> Heatmap</span>
-    </div>
-
+<span style="color:red;">● Agenda</span> |
+  <span style="color:blue;">● Segunda</span> |
+  <span style="color:green;">● Terça</span> |
+  <span style="color:purple;">● Quarta</span> |
+  <span style="color:brown;">● Quinta</span> |
+  <span style="color:black;">● Sexta</span> |
+  <span style="color:orange;">● Sábado</span> |
+  <span style="color:darkorange;">🔥 Heatmap</span>
+</div>
+</body>
+<script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
