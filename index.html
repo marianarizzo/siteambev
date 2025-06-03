@@ -25,66 +25,64 @@
     }
 
     .filtros {
-  position: absolute;
-  top: 10px;
-  left: 50px;
-  z-index: 1000;
-  background: transparent;
-  padding: 5px 5px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
-  font-family: sans-serif;
-  max-width: calc(100vw - 40px);
-}
+      position: absolute;
+      top: 10px;
+      left: 50px;
+      z-index: 1000;
+      background: transparent;
+      padding: 5px 5px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      font-family: sans-serif;
+      max-width: calc(100vw - 40px);
+    }
 
-.filtros label {
-  font-weight: bold;
-  font-size: 12px;
-  margin-bottom: 2px;
-}
+    .filtros label {
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
 
-.filtros select {
-  font-size: 12px;
-  width: 220px;
-  height: 20px;
-  min-width: 220px;
-  border-radius: 6px;
-  padding: 6px 10px;
-  box-sizing: border-box;
-  border: 1px transparent;
-  background-color: transparent;
-}
+    .filtros select {
+      font-size: 12px;
+      width: 220px;
+      height: 20px;
+      min-width: 220px;
+      border-radius: 6px;
+      padding: 6px 10px;
+      box-sizing: border-box;
+      border: 1px transparent;
+      background-color: transparent;
+    }
 
-/* Correção de proporção e quebra de linha para Choices.js */
-.choices {
-  width: 220px !important;
-  min-width: 220px !important;
-  max-width: 220px !important;
-}
+    .choices {
+      width: 220px !important;
+      min-width: 220px !important;
+      max-width: 220px !important;
+    }
 
-.choices__inner {
-  min-height: 38px !important;
-  height: auto !important;
-  line-height: 36px !important;
-  font-size: 14px;
-  white-space: nowrap !important;
-  text-overflow: ellipsis !important;
-  overflow: hidden !important;
-  padding: 6px 10px !important;
-  border-radius: 6px;
-  box-sizing: border-box;
-}
+    .choices__inner {
+      min-height: 38px !important;
+      height: auto !important;
+      line-height: 36px !important;
+      font-size: 14px;
+      white-space: nowrap !important;
+      text-overflow: ellipsis !important;
+      overflow: hidden !important;
+      padding: 6px 10px !important;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
 
-/* Evita quebra de nome na dropdown */
-.choices__list--dropdown .choices__item {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 200px !important;
-}
+    .choices__list--dropdown .choices__item {
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 200px !important;
+    }
 
     #botaoHeatmap {
       position: absolute;
@@ -112,6 +110,49 @@
       text-align: center;
       box-shadow: 0 1px 2px rgba(0,0,0,0.15);
       pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      .filtros {
+        flex-direction: column;
+        align-items: flex-start;
+        left: 10px;
+        top: 10px;
+        gap: 8px;
+        background: rgba(255,255,255,0.95);
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        max-width: 90vw;
+      }
+
+      .filtros .select-wrapper {
+        width: 100%;
+      }
+
+      .choices,
+      .choices__inner,
+      .filtros select {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .choices__list--dropdown .choices__item {
+        max-width: 100% !important;
+      }
+
+      #botaoHeatmap {
+        left: 10px;
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+
+      #legenda {
+        font-size: 11px;
+        padding: 5px;
+        max-width: 95vw;
+      }
     }
   </style>
 </head>
