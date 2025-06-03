@@ -201,15 +201,24 @@
         let cor = 'gray';
 
         if (diasSelecionados.length === 0) {
-          const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-          for (let dia of dias) {
-            if (d[dia]?.trim() === '1') {
-              cor = coresPorDia[dia];
-              diaValido = true;
-              break;
-            }
-          }
-        } else {
+  const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+    .every(dia => d[dia]?.trim() === '1');
+
+  if (isAgenda) {
+    cor = coresPorDia['Agenda'];
+    diaValido = true;
+  } else {
+    const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    for (let dia of dias) {
+      if (d[dia]?.trim() === '1') {
+        cor = coresPorDia[dia];
+        diaValido = true;
+        break;
+      }
+    }
+  }
+}
+         else {
           if (diasSelecionados.includes('Agenda')) {
             const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
               .every(dia => d[dia]?.trim() === '1');
