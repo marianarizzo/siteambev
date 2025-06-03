@@ -33,10 +33,10 @@
       padding: 10px;
     }
     .filtros label {
-      font-size: 12px;
-      margin-bottom: 4px;
-      display: block;
+      font-size: 13px;
       font-weight: bold;
+      margin-bottom: 2px;
+      display: block;
     }
     .filtros .select-wrapper {
       display: flex;
@@ -45,12 +45,23 @@
     .filtros select {
       font-size: 13px;
       width: 200px;
-      min-height: 48px;
+      height: 40px;
       border-radius: 10px;
       border: 1px solid #ccc;
       padding: 6px 10px;
-      background-color: #f7f7f7;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      background-color: #f7f7f7;
+      box-sizing: border-box;
+    }
+    .choices__inner {
+      border-radius: 10px !important;
+      background-color: #f7f7f7 !important;
+      font-size: 13px;
+      min-height: 38px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    }
+    .choices[data-type*=select-multiple] .choices__button {
+      font-size: 10px;
     }
     #botaoHeatmap {
       position: absolute;
@@ -82,11 +93,11 @@
 </head>
 <body>
   <div class="filtros">
-    <div class="select-wrapper"><label for="filtroCDD">CDD</label><select id="filtroCDD" multiple></select></div>
-    <div class="select-wrapper"><label for="filtroGN">GN</label><select id="filtroGN" multiple></select></div>
-    <div class="select-wrapper"><label for="filtroInplant">Inplant</label><select id="filtroInplant" multiple></select></div>
-    <div class="select-wrapper"><label for="filtroRede">Rede</label><select id="filtroRede" multiple></select></div>
-    <div class="select-wrapper"><label for="filtroDia">Dia</label><select id="filtroDia" multiple></select></div>
+    <div class="select-wrapper"><label>CDD</label><select id="filtroCDD" multiple></select></div>
+    <div class="select-wrapper"><label>GN</label><select id="filtroGN" multiple></select></div>
+    <div class="select-wrapper"><label>Inplant</label><select id="filtroInplant" multiple></select></div>
+    <div class="select-wrapper"><label>Rede</label><select id="filtroRede" multiple></select></div>
+    <div class="select-wrapper"><label>Dia</label><select id="filtroDia" multiple></select></div>
   </div>
 
   <button id="botaoHeatmap">Ativar Heatmap</button>
@@ -116,11 +127,11 @@
     const grupoMarcadores = L.layerGroup().addTo(map);
     let heatLayer;
 
-    const iconCDD = L.icon({
-      iconUrl: 'https://www.flaticon.com/free-icon/location-pin_2776067?term=location&page=1&position=24&origin=search&related_id=2776067',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+    const cddIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2776/2776067.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
     });
 
     const cddLocations = [
@@ -129,6 +140,12 @@
       { name: 'GOI', lat: -16.609740763065844, lon: -49.292487087578984 },
       { name: 'MAN', lat: -3.021734706895321, lon: -60.02195693918584 }
     ];
+
+    cddLocations.forEach(loc => {
+      L.marker([loc.lat, loc.lon], { icon: cddIcon }).bindPopup(
+        `<b>${loc.name}</b><br>Latitude: ${loc.lat}<br>Longitude: ${loc.lon}`
+      ).addTo(grupoMarcadores);
+    });
 
     const filtros = {
       CDD: new Choices('#filtroCDD', { removeItemButton: true }),
@@ -156,15 +173,14 @@
 
     function atualizarMapa(dados) {
       grupoMarcadores.clearLayers();
-      cddLocations.forEach(location => {
-        const marker = L.marker([location.lat, location.lon], { icon: iconCDD }).bindPopup(
-          `<b>${location.name}</b><br>Latitude: ${location.lat}<br>Longitude: ${location.lon}`
-        );
-        grupoMarcadores.addLayer(marker);
-      });
-
       if (heatLayer) map.removeLayer(heatLayer);
       let heatData = [];
+
+      cddLocations.forEach(loc => {
+        L.marker([loc.lat, loc.lon], { icon: cddIcon }).bindPopup(
+          `<b>${loc.name}</b><br>Latitude: ${loc.lat}<br>Longitude: ${loc.lon}`
+        ).addTo(grupoMarcadores);
+      });
 
       const cdd = filtros.CDD.getValue(true);
       const gn = filtros.GN.getValue(true);
@@ -193,14 +209,10 @@
               break;
             }
           }
-          const isAgenda = dias.every(dia => d[dia]?.trim() === '1');
-          if (isAgenda) {
-            diaValido = true;
-            cor = coresPorDia['Agenda'];
-          }
         } else {
           if (diasSelecionados.includes('Agenda')) {
-            const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].every(dia => d[dia]?.trim() === '1');
+            const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+              .every(dia => d[dia]?.trim() === '1');
             if (isAgenda) {
               diaValido = true;
               cor = coresPorDia['Agenda'];
@@ -209,8 +221,8 @@
           if (!diaValido) {
             for (let dia of diasSelecionados) {
               if (d[dia]?.trim() === '1') {
-                cor = coresPorDia[dia];
                 diaValido = true;
+                cor = coresPorDia[dia];
                 break;
               }
             }
@@ -244,7 +256,6 @@
         preencherFiltros(dados, 'GN', filtros.GN);
         preencherFiltros(dados, 'Inplant', filtros.Inplant);
         preencherFiltros(dados, 'Rede', filtros.Rede);
-
         filtros.Dia.clearChoices();
         filtros.Dia.setChoices([
           { value: 'Agenda', label: 'Agenda' },
@@ -255,19 +266,13 @@
           { value: 'Sexta', label: 'Sexta' },
           { value: 'Sábado', label: 'Sábado' }
         ], 'value', 'label', true);
-
         atualizarMapa(dados);
-
-        Object.values(filtros).forEach(f => {
-          f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
-        });
-
+        Object.values(filtros).forEach(f =>
+          f.passedElement.element.addEventListener('change', () => atualizarMapa(dados))
+        );
         document.getElementById('botaoHeatmap').addEventListener('click', () => {
-          if (map.hasLayer(heatLayer)) {
-            map.removeLayer(heatLayer);
-          } else {
-            heatLayer.addTo(map);
-          }
+          if (map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
+          else heatLayer.addTo(map);
         });
       }
     });
