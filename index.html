@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>Mapa Interativo - Ambev</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   <style>
@@ -13,6 +14,7 @@
       margin: 0;
       padding: 0;
     }
+
     #map {
       position: absolute;
       top: 0;
@@ -21,60 +23,82 @@
       left: 0;
       z-index: 0;
     }
-     .filtros {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      max-width: calc(100vw - 40px);
-      padding: 10px;
-    }
-    .filtros label {
-      font-size: 13px;
-      font-weight: bold;
-      margin-bottom: 4px;
-      display: block;
-    }
-    .filtros .select-wrapper {
-      display: flex;
-      flex-direction: column;
-    }
-     .filtros select {
-      font-size: 14px;
-      width: 220px;
-      height: 42px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-      background-color: #f7f7f7;
-      box-sizing: border-box;
-    }
-    .choices__inner {
-      border-radius: 10px !important;
-      background-color: #f7f7f7 !important;
-      font-size: 14px !important;
-      min-height: 40px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-    }
-    .choices[data-type*=select-multiple] .choices__button {
-      font-size: 10px;
-    }
+
+    .filtros {
+  position: absolute;
+  top: 10px;
+  left: 50px;
+  z-index: 1000;
+  background: transparent;
+  padding: 5px 5px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  font-family: sans-serif;
+  max-width: calc(100vw - 40px);
+}
+
+.filtros label {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.filtros select {
+  font-size: 12px;
+  width: 220px;
+  height: 20px;
+  min-width: 220px;
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  border: 1px transparent;
+  background-color: transparent;
+}
+
+/* Correção de proporção e quebra de linha para Choices.js */
+.choices {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+.choices__inner {
+  min-height: 38px !important;
+  height: auto !important;
+  line-height: 36px !important;
+  font-size: 14px;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  padding: 6px 10px !important;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Evita quebra de nome na dropdown */
+.choices__list--dropdown .choices__item {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 200px !important;
+}
+
     #botaoHeatmap {
       position: absolute;
       bottom: 10px;
       left: 10px;
+      z-index: 1001;
       background-color: white;
       padding: 6px 12px;
       border-radius: 10px;
       font-size: 12px;
       font-family: Arial, sans-serif;
       box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      z-index: 1001;
     }
+
     #legenda {
       position: absolute;
       bottom: 10px;
@@ -89,7 +113,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.15);
       pointer-events: none;
     }
- </style>
+  </style>
 </head>
 <body>
   <div class="filtros">
@@ -140,12 +164,6 @@
       { name: 'GOI', lat: -16.609740763065844, lon: -49.292487087578984 },
       { name: 'MAN', lat: -3.021734706895321, lon: -60.02195693918584 }
     ];
-
-    cddLocations.forEach(loc => {
-      L.marker([loc.lat, loc.lon], { icon: cddIcon }).bindPopup(
-        `<b>${loc.name}</b><br>Latitude: ${loc.lat}<br>Longitude: ${loc.lon}`
-      ).addTo(grupoMarcadores);
-    });
 
     const filtros = {
       CDD: new Choices('#filtroCDD', { removeItemButton: true }),
@@ -200,40 +218,29 @@
         let diaValido = false;
         let cor = 'gray';
 
-        if (diasSelecionados.length === 0) {
-  const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
-    .every(dia => d[dia]?.trim() === '1');
+        const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
 
-  if (isAgenda) {
-    cor = coresPorDia['Agenda'];
-    diaValido = true;
-  } else {
-    const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    for (let dia of dias) {
-      if (d[dia]?.trim() === '1') {
-        cor = coresPorDia[dia];
-        diaValido = true;
-        break;
-      }
-    }
-  }
-}
-         else {
-          if (diasSelecionados.includes('Agenda')) {
-            const isAgenda = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
-              .every(dia => d[dia]?.trim() === '1');
-            if (isAgenda) {
-              diaValido = true;
-              cor = coresPorDia['Agenda'];
-            }
-          }
-          if (!diaValido) {
-            for (let dia of diasSelecionados) {
+        if (diasSelecionados.length === 0) {
+          if (isAgenda) {
+            diaValido = true;
+            cor = coresPorDia['Agenda'];
+          } else {
+            for (let dia of ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado']) {
               if (d[dia]?.trim() === '1') {
-                diaValido = true;
                 cor = coresPorDia[dia];
+                diaValido = true;
                 break;
               }
+            }
+          }
+        } else {
+          for (let dia of diasSelecionados) {
+            if (dia === 'Agenda' && isAgenda) {
+              diaValido = true;
+              cor = coresPorDia['Agenda'];
+            } else if (d[dia]?.trim() === '1') {
+              diaValido = true;
+              cor = coresPorDia[dia];
             }
           }
         }
@@ -265,7 +272,6 @@
         preencherFiltros(dados, 'GN', filtros.GN);
         preencherFiltros(dados, 'Inplant', filtros.Inplant);
         preencherFiltros(dados, 'Rede', filtros.Rede);
-        filtros.Dia.clearChoices();
         filtros.Dia.setChoices([
           { value: 'Agenda', label: 'Agenda' },
           { value: 'Segunda', label: 'Segunda' },
@@ -276,9 +282,9 @@
           { value: 'Sábado', label: 'Sábado' }
         ], 'value', 'label', true);
         atualizarMapa(dados);
-        Object.values(filtros).forEach(f =>
-          f.passedElement.element.addEventListener('change', () => atualizarMapa(dados))
-        );
+        Object.values(filtros).forEach(f => {
+          f.passedElement.element.addEventListener('change', () => atualizarMapa(dados));
+        });
         document.getElementById('botaoHeatmap').addEventListener('click', () => {
           if (map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
           else heatLayer.addTo(map);
