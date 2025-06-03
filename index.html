@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-
   <style>
     html, body {
       width: 100%;
@@ -14,7 +13,6 @@
       margin: 0;
       padding: 0;
     }
-
     #map {
       position: absolute;
       top: 0;
@@ -23,7 +21,6 @@
       left: 0;
       z-index: 0;
     }
-
     .filtros {
       position: absolute;
       top: 12px;
@@ -35,33 +32,26 @@
       max-width: calc(100vw - 40px);
       padding: 10px;
     }
-
+    .filtros label {
+      font-size: 12px;
+      margin-bottom: 4px;
+      display: block;
+      font-weight: bold;
+    }
+    .filtros .select-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
     .filtros select {
       font-size: 13px;
       width: 200px;
-      height: 40px;
+      min-height: 48px;
       border-radius: 10px;
       border: 1px solid #ccc;
       padding: 6px 10px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       background-color: #f7f7f7;
-      box-sizing: border-box;
-      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
-
-    .choices__inner {
-      border-radius: 10px !important;
-      background-color: #f7f7f7 !important;
-      font-size: 13px;
-      min-height: 38px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-      box-sizing: border-box;
-    }
-
-    .choices[data-type*=select-multiple] .choices__button {
-      font-size: 10px;
-    }
-
     #botaoHeatmap {
       position: absolute;
       bottom: 10px;
@@ -74,7 +64,6 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.2);
       z-index: 1001;
     }
-
     #legenda {
       position: absolute;
       bottom: 10px;
@@ -93,11 +82,11 @@
 </head>
 <body>
   <div class="filtros">
-    <select id="filtroCDD" multiple></select>
-    <select id="filtroGN" multiple></select>
-    <select id="filtroInplant" multiple></select>
-    <select id="filtroRede" multiple></select>
-    <select id="filtroDia" multiple></select>
+    <div class="select-wrapper"><label for="filtroCDD">CDD</label><select id="filtroCDD" multiple></select></div>
+    <div class="select-wrapper"><label for="filtroGN">GN</label><select id="filtroGN" multiple></select></div>
+    <div class="select-wrapper"><label for="filtroInplant">Inplant</label><select id="filtroInplant" multiple></select></div>
+    <div class="select-wrapper"><label for="filtroRede">Rede</label><select id="filtroRede" multiple></select></div>
+    <div class="select-wrapper"><label for="filtroDia">Dia</label><select id="filtroDia" multiple></select></div>
   </div>
 
   <button id="botaoHeatmap">Ativar Heatmap</button>
@@ -167,12 +156,8 @@
 
     function atualizarMapa(dados) {
       grupoMarcadores.clearLayers();
-
-      // Reinsere os CDDs fixos com ícone personalizado
       cddLocations.forEach(location => {
-        const marker = L.marker([location.lat, location.lon], {
-          icon: iconCDD
-        }).bindPopup(
+        const marker = L.marker([location.lat, location.lon], { icon: iconCDD }).bindPopup(
           `<b>${location.name}</b><br>Latitude: ${location.lat}<br>Longitude: ${location.lon}`
         );
         grupoMarcadores.addLayer(marker);
