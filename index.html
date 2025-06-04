@@ -23,164 +23,126 @@
       left: 0;
       z-index: 0;
     }
+.filtros {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: "Segoe UI", sans-serif;
+}
 
-    .filtros {
-      position: absolute;
-      top: 10px;
-      left: 50px;
-      z-index: 1000;
-      background: transparent;
-      padding: 5px 5px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 10px;
-      font-family: sans-serif;
-      max-width: calc(100vw - 40px);
-    }
+.select-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  max-width: 200px;
+  flex: 1 1 auto;
+   font-weight: bold;
+}
 
-    .filtros label {
-      font-weight: bold;
-      font-size: 12px;
-      margin-bottom: 2px;
-    }
+.select-wrapper label {
+  font-size: 12px;
+  color: #444;
+  margin-bottom: 3px;
+  padding-left: 4px;
+}
 
-    .filtros select {
-      font-size: 12px;
-      width: 220px;
-      height: 20px;
-      min-width: 220px;
-      border-radius: 6px;
-      padding: 6px 10px;
-      box-sizing: border-box;
-      border: 1px transparent;
-      background-color: transparent;
-    }
+.choices {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  padding: 0;
+  transition: all 0.2s ease-in-out;
+  max-width: 100%;
+}
 
-    .choices {
-      width: 220px !important;
-      min-width: 220px !important;
-      max-width: 220px !important;
-    }
+.choices__inner {
+  background-color: transparent;
+  border: none !important;
+  box-shadow: none !important;
+  min-height: 34px !important;
+  line-height: 5px !important;
+  padding: 4px 8px !important;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-    .choices__inner {
-      min-height: 38px !important;
-      height: auto !important;
-      line-height: 36px !important;
-      font-size: 14px;
-      white-space: nowrap !important;
-      text-overflow: ellipsis !important;
-      overflow: hidden !important;
-      padding: 6px 10px !important;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
+.choices__inner:focus-within {
+  white-space: normal;
+  overflow: visible;
+}
 
-    .choices__list--dropdown .choices__item {
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      max-width: 200px !important;
-    }
+.choices__list--dropdown .choices__item {
+  font-size: 10px;
+  padding: 6px 10px;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+  overflow: visible;
+}
 
-    #botaoHeatmap {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      z-index: 1001;
-      background-color: white;
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-family: Arial, sans-serif;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    }
+#botaoHeatmap {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  z-index: 1000;
+  background-color: white;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-family: "Segoe UI", sans-serif;
+  border: 1px solid #ccc;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
 
-    #legenda {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: white;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      text-align: center;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-      pointer-events: none;
-    }
+#legenda {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 999;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
 
-    @media (max-width: 768px) {
-      .filtros {
-        flex-direction: column;
-        align-items: flex-start;
-        left: 10px;
-        top: 10px;
-        gap: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 12px;
-        border-radius: 10px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-        max-width: 95vw;
-      }
+@media (max-width: 768px) {
+  .filtros {
+    flex-direction: column;
+    left: 10px;
+    right: 10px;
+  }
 
-      .filtros .select-wrapper {
-        width: 100%;
-      }
+  .select-wrapper {
+    min-width: 100%;
+  }
 
-      .choices,
-      .choices__inner,
-      .filtros select {
-        width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-      }
+  .choices {
+    font-size: 10px;
+  }
 
-      .choices__inner {
-        white-space: normal !important;
-        overflow: visible !important;
-        text-overflow: unset !important;
-        min-height: 44px !important;
-        line-height: 20px !important;
-        word-break: normal !important;
-        word-wrap: normal !important;
-      }
+  #botaoHeatmap {
+    bottom: 110px;
+  }
 
-      .choices__list--dropdown {
-        max-height: 300px !important;
-        overflow-y: auto !important;
-        font-size: 16px !important;
-      }
+  #legenda {
+    bottom: 70px;
+  }
+}
 
-      .choices__list--dropdown .choices__item {
-        white-space: normal !important;
-        word-break: normal !important;
-        word-wrap: normal !important;
-        overflow: visible !important;
-        max-width: 100% !important;
-        padding: 10px !important;
-      }
 
-      .choices__item--selectable {
-        display: flex !important;
-        align-items: center;
-        justify-content: flex-start;
-      }
 
-      #botaoHeatmap {
-        font-size: 14px;
-        padding: 8px 16px;
-      }
 
-      #legenda {
-        font-size: 11px;
-        padding: 5px;
-        max-width: 95vw;
-      }
-    }
   </style>
 </head>
 <body>
@@ -190,6 +152,7 @@
     <div class="select-wrapper"><label>Inplant</label><select id="filtroInplant" multiple></select></div>
     <div class="select-wrapper"><label>Rede</label><select id="filtroRede" multiple></select></div>
     <div class="select-wrapper"><label>Dia</label><select id="filtroDia" multiple></select></div>
+    <div class="select-wrapper"><label>Eg Cliente</label><select id="filtroEGDV" multiple></select></div>
   </div>
 
   <button id="botaoHeatmap">Ativar Heatmap</button>
@@ -238,17 +201,8 @@
       GN: new Choices('#filtroGN', { removeItemButton: true }),
       Inplant: new Choices('#filtroInplant', { removeItemButton: true }),
       Rede: new Choices('#filtroRede', { removeItemButton: true }),
-      Dia: new Choices('#filtroDia', { removeItemButton: true })
-    };
-
-    const coresPorDia = {
-      'Agenda': 'red',
-      'Segunda': 'blue',
-      'Terça': 'green',
-      'Quarta': 'purple',
-      'Quinta': 'brown',
-      'Sexta': 'black',
-      'Sábado': 'orange'
+      Dia: new Choices('#filtroDia', { removeItemButton: true }),
+      EGDV: new Choices('#filtroEGDV', { removeItemButton: true }) // Eg Cliente
     };
 
     function preencherFiltros(dados, chave, controle) {
@@ -273,6 +227,17 @@
       const inplant = filtros.Inplant.getValue(true);
       const rede = filtros.Rede.getValue(true);
       const diasSelecionados = filtros.Dia.getValue(true);
+      const egdv = filtros.EGDV.getValue(true);
+
+      const coresPorDia = {
+        'Agenda': 'red',
+        'Segunda': 'blue',
+        'Terça': 'green',
+        'Quarta': 'purple',
+        'Quinta': 'brown',
+        'Sexta': 'black',
+        'Sábado': 'orange'
+      };
 
       dados.forEach(d => {
         const lat = parseFloat(d['LAT']);
@@ -283,9 +248,10 @@
         const gnValido = gn.length === 0 || gn.includes(d['GN']);
         const inplantValido = inplant.length === 0 || inplant.includes(d['Inplant']);
         const redeValido = rede.length === 0 || rede.includes(d['Rede']);
+        const egdvValido = egdv.length === 0 || egdv.includes(d['EG DV']);
+
         let diaValido = false;
         let cor = 'gray';
-
         const isAgenda = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].every(dia => d[dia]?.trim() === '1');
 
         if (diasSelecionados.length === 0) {
@@ -293,7 +259,7 @@
             diaValido = true;
             cor = coresPorDia['Agenda'];
           } else {
-            for (let dia of ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado']) {
+            for (let dia of Object.keys(coresPorDia).filter(d => d !== 'Agenda')) {
               if (d[dia]?.trim() === '1') {
                 cor = coresPorDia[dia];
                 diaValido = true;
@@ -313,7 +279,7 @@
           }
         }
 
-        if (cddValido && gnValido && inplantValido && redeValido && diaValido) {
+        if (cddValido && gnValido && inplantValido && redeValido && egdvValido && diaValido) {
           heatData.push([lat, lon, 1]);
           const marker = L.circleMarker([lat, lon], {
             radius: 6,
@@ -322,7 +288,7 @@
             fillOpacity: 0.8,
             weight: 1
           }).bindPopup(
-            `<b>${d['Nome']}</b><br>CDD: ${d['CDD']}<br>GN: ${d['GN']}<br>Inplant: ${d['Inplant']}<br>Rede: ${d['Rede']}`
+            `<b>${d['Nome']}</b><br>CDD: ${d['CDD']}<br>GN: ${d['GN']}<br>Inplant: ${d['Inplant']}<br>Rede: ${d['Rede']}<br>Eg Cliente: ${d['EG DV']}`
           );
           grupoMarcadores.addLayer(marker);
         }
@@ -340,6 +306,7 @@
         preencherFiltros(dados, 'GN', filtros.GN);
         preencherFiltros(dados, 'Inplant', filtros.Inplant);
         preencherFiltros(dados, 'Rede', filtros.Rede);
+        preencherFiltros(dados, 'EG DV', filtros.EGDV);
         filtros.Dia.setChoices([
           { value: 'Agenda', label: 'Agenda' },
           { value: 'Segunda', label: 'Segunda' },
