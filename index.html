@@ -2,20 +2,35 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <title>Mapa Interativo - Google Usabilidade</title>
+  <title>Mapa Interativo - Ambev</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
   <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      z-index: 0;
+    }
 .filtros {
   position: absolute;
   top: 16px;
   left: 50%;
-  transform: translateX(-50%);
   z-index: 1000;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 2px;
   font-family: "Segoe UI", sans-serif;
   justify-content: center;
   background: transparent;
@@ -36,9 +51,9 @@
   background: #fff;
   border-radius: 30px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  font-size: 14px;
+  font-size: 10px;
   padding: 4px 12px;
-  max-width: 240px;
+  max-width: 100px;
 }
 
 .choices__inner {
@@ -53,13 +68,20 @@
   word-break: normal !important;
 }
 
+
+
+.choices__inner:focus-within {
+  white-space: normal;
+  overflow: visible;
+}
+
 .choices__list--dropdown .choices__item {
-  font-size: 13px;
-  padding: 8px 10px;
+  font-size: 10px;
+  padding: 6px 10px;
   white-space: normal;
   word-break: break-word;
+  max-width: 100%;
   overflow: visible;
-  max-width: none;
 }
 
 #botaoHeatmap {
@@ -69,8 +91,8 @@
   z-index: 1000;
   background-color: white;
   padding: 8px 14px;
-  border-radius: 20px;
-  font-size: 13px;
+  border-radius: 16px;
+  font-size: 10px;
   font-family: "Segoe UI", sans-serif;
   border: 1px solid #ccc;
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
@@ -83,27 +105,25 @@
   z-index: 999;
   background: white;
   padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: 16px;
+  font-size: 1px;
   font-family: "Segoe UI", sans-serif;
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 @media (max-width: 768px) {
   .filtros {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    flex-direction: column;
     left: 10px;
-    transform: none;
+    right: 10px;
   }
 
   .select-wrapper {
-    min-width: 160px;
+    min-width: 100%;
   }
 
   .choices {
-    max-width: 180px;
-    font-size: 13px;
+    font-size: 10px;
   }
 
   #botaoHeatmap {
@@ -114,16 +134,20 @@
     bottom: 70px;
   }
 }
-</style>
+
+
+
+
+  </style>
 </head>
 <body>
   <div class="filtros">
-    <div class="select-wrapper"><select id="filtroCDD" multiple placeholder="CDD"></select></div>
-    <div class="select-wrapper"><select id="filtroGN" multiple placeholder="GN"></select></div>
-    <div class="select-wrapper"><select id="filtroInplant" multiple placeholder="Inplant"></select></div>
-    <div class="select-wrapper"><select id="filtroRede" multiple placeholder="Rede"></select></div>
-    <div class="select-wrapper"><select id="filtroDia" multiple placeholder="Dia"></select></div>
-    <div class="select-wrapper"><select id="filtroEGDV" multiple placeholder="Eg Cliente"></select></div>
+    <div class="select-wrapper"><label>CDD</label><select id="filtroCDD" multiple></select></div>
+    <div class="select-wrapper"><label>GN</label><select id="filtroGN" multiple></select></div>
+    <div class="select-wrapper"><label>Inplant</label><select id="filtroInplant" multiple></select></div>
+    <div class="select-wrapper"><label>Rede</label><select id="filtroRede" multiple></select></div>
+    <div class="select-wrapper"><label>Dia</label><select id="filtroDia" multiple></select></div>
+    <div class="select-wrapper"><label>Eg Cliente</label><select id="filtroEGDV" multiple></select></div>
   </div>
 
   <button id="botaoHeatmap">Ativar Heatmap</button>
@@ -145,8 +169,8 @@
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
   <script>
-    
     const url = 'https://raw.githubusercontent.com/marianarizzo/siteambev/main/Planner%20CSV.csv';
     const map = L.map('map').setView([-15.7797, -47.9297], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -173,7 +197,7 @@
       Inplant: new Choices('#filtroInplant', { removeItemButton: true }),
       Rede: new Choices('#filtroRede', { removeItemButton: true }),
       Dia: new Choices('#filtroDia', { removeItemButton: true }),
-      EGDV: new Choices('#filtroEGDV', { removeItemButton: true })
+      EGDV: new Choices('#filtroEGDV', { removeItemButton: true }) // Eg Cliente
     };
 
     function preencherFiltros(dados, chave, controle) {
@@ -297,7 +321,6 @@
         });
       }
     });
-  
   </script>
 </body>
 </html>
